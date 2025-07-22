@@ -11,8 +11,9 @@ import { TeamMember, WorkStatus } from '@/lib/data';
 import { batchUpdateUserStatus } from '@/lib/firestore';
 import { Building, Laptop, CalendarPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { isWeekend, format } from 'date-fns';
+import { isWeekend, format, eachDayOfInterval } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DateRange } from 'react-day-picker';
 
 type UpdatePresenceDialogProps = {
   member: TeamMember;
@@ -23,22 +24,33 @@ type DayStatusUpdate = { date: Date; status: WorkStatus };
 
 export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenceDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedDays, setSelectedDays] = useState<Date[] | undefined>([]);
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
+  const [selectedDays, setSelectedDays] = useState<Date[]>([]);
   const [dayStatuses, setDayStatuses] = useState<Record<string, WorkStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (selectedDays) {
+    if (selectedRange?.from) {
+      const from = selectedRange.from;
+      const to = selectedRange.to || from;
+      const daysInRange = eachDayOfInterval({ start: from, end: to });
+      const workDays = daysInRange.filter(day => !isWeekend(day));
+      setSelectedDays(workDays);
+      
       const newStatuses: Record<string, WorkStatus> = {};
-      selectedDays.forEach(day => {
+      workDays.forEach(day => {
         const dayStr = day.toISOString().split('T')[0];
         // Keep existing status if available, otherwise default to 'In Office'
         newStatuses[dayStr] = dayStatuses[dayStr] || 'In Office';
       });
       setDayStatuses(newStatuses);
+
+    } else {
+      setSelectedDays([]);
+      setDayStatuses({});
     }
-  }, [selectedDays]);
+  }, [selectedRange]);
 
 
   const handleStatusChange = (day: Date, status: WorkStatus) => {
@@ -70,6 +82,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
       });
       onUpdate();
       setIsOpen(false);
+      setSelectedRange(undefined);
       setSelectedDays([]);
       setDayStatuses({});
     } catch (error) {
@@ -98,11 +111,11 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
           <div>
-            <Label className="mb-2 block font-medium">1. Select one or more dates</Label>
+            <Label className="mb-2 block font-medium">1. Select a date range</Label>
             <Calendar
-              mode="multiple"
-              selected={selectedDays}
-              onSelect={setSelectedDays}
+              mode="range"
+              selected={selectedRange}
+              onSelect={setSelectedRange}
               className="rounded-md border"
               disabled={isWeekend}
             />
@@ -145,7 +158,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
                   </div>
                 ) : (
                     <div className="flex items-center justify-center h-full">
-                        <p className="text-muted-foreground">Select dates to set your status.</p>
+                        <p className="text-muted-foreground">Select a date or range to set your status.</p>
                     </div>
                 )}
             </ScrollArea>
