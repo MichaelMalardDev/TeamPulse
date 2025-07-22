@@ -1,17 +1,15 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2, Wand2 } from 'lucide-react';
 import { generateSummaryAction } from '@/app/summary/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Plus, Trash2, Wand2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { teamData } from '@/lib/data';
-import { useEffect } from 'react';
 
 const initialState = {
   summary: undefined,
@@ -39,7 +37,7 @@ function SubmitButton() {
 }
 
 export default function TeamSummaryForm() {
-  const [state, formAction] = useFormState(generateSummaryAction, initialState);
+  const [state, formAction] = useActionState(generateSummaryAction, initialState);
 
   const remoteTeamMembers = teamData.filter(member => member.status === 'Remote');
 
