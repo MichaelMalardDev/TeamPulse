@@ -16,7 +16,7 @@ export default function StatusSelector({ currentStatus, onStatusChange }: Status
         size="lg"
         onClick={() => onStatusChange('In Office')}
         className={cn(
-          "transition-all duration-200",
+          "transition-all duration-200 text-base px-6 py-3",
           currentStatus === 'In Office' ? 'shadow-lg shadow-primary/30' : ''
         )}
       >
@@ -28,7 +28,7 @@ export default function StatusSelector({ currentStatus, onStatusChange }: Status
         size="lg"
         onClick={() => onStatusChange('Remote')}
         className={cn(
-          "transition-all duration-200",
+          "transition-all duration-200 text-base px-6 py-3",
           currentStatus === 'Remote' ? 'shadow-lg shadow-primary/30' : ''
         )}
       >
