@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { teamData, currentUser, TeamMember, WorkStatus } from '@/lib/data';
 import StatusSelector from './status-selector';
 import TeamOverview from './team-overview';
+import WeeklyOverview from './weekly-overview';
 
 export default function DashboardPage() {
   const [team, setTeam] = useState<TeamMember[]>(teamData);
@@ -29,6 +30,8 @@ export default function DashboardPage() {
         <h2 className="text-xl font-semibold">Your Status Today</h2>
         <StatusSelector currentStatus={currentStatus} onStatusChange={handleStatusChange} />
       </div>
+
+      <WeeklyOverview team={team} />
 
       <TeamOverview team={team} />
     </div>
