@@ -1,3 +1,4 @@
+
 export type WorkStatus = 'In Office' | 'Remote';
 
 export interface TeamMember {
@@ -10,7 +11,7 @@ export interface TeamMember {
 }
 
 const today = new Date();
-const generateHistory = (userId: number): { date: Date; status: WorkStatus }[] => {
+export const generateHistory = (userId: number): { date: Date; status: WorkStatus }[] => {
   const history: { date: Date; status: WorkStatus }[] = [];
   // Generate from 30 days in the past to 7 days in the future
   for (let i = -30; i <= 7; i++) {

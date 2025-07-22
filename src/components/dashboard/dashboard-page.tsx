@@ -9,7 +9,7 @@ import WeeklyOverview from './weekly-overview';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardPage() {
-  const { teamMember } = useAuth();
+  const { teamMember, loading } = useAuth();
   const [team, setTeam] = useState<TeamMember[]>(teamData);
   const [currentUser, setCurrentUser] = useState<TeamMember | null>(null);
   const [currentStatus, setCurrentStatus] = useState<WorkStatus>('In Office');
@@ -22,6 +22,10 @@ export default function DashboardPage() {
         const today = new Date().toISOString().split('T')[0];
         const todaysRecord = userInTeam.history.find(h => h.date.toISOString().startsWith(today));
         setCurrentStatus(todaysRecord ? todaysRecord.status : userInTeam.status);
+      } else {
+        // If the user is new and was just added to teamData
+        setCurrentUser(teamMember);
+        setCurrentStatus(teamMember.status);
       }
     }
   }, [teamMember, team]);
@@ -68,7 +72,7 @@ export default function DashboardPage() {
     handleTeamUpdate(updatedTeam);
   };
 
-  if (!currentUser) {
+  if (loading || !currentUser) {
     return <div>Loading user data...</div>;
   }
 

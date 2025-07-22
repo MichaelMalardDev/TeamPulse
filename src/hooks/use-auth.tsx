@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
-import { teamData, TeamMember } from '@/lib/data';
+import { teamData, TeamMember, generateHistory } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
@@ -28,7 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        const member = teamData.find(m => m.name.split(' ')[0] === firebaseUser.displayName?.split(' ')[0]);
+        let member = teamData.find(m => m.name.split(' ')[0] === firebaseUser.displayName?.split(' ')[0]);
+        if (!member && firebaseUser.displayName) {
+          const newId = Math.max(...teamData.map(m => m.id)) + 1;
+          member = {
+            id: newId,
+            name: firebaseUser.displayName,
+            role: 'New User',
+            avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100',
+            status: 'In Office',
+            history: generateHistory(newId)
+          };
+          teamData.push(member);
+        }
         setTeamMember(member || null);
       } else {
         setTeamMember(null);
