@@ -1,7 +1,9 @@
+
 import { db } from './firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, Timestamp, query, where } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import type { TeamMember, WorkStatus } from './data';
+import { startOfDay } from 'date-fns';
 
 function fromTimestamp(timestamp: Timestamp | Date): Date {
   if (timestamp instanceof Timestamp) {
@@ -63,10 +65,10 @@ export async function updateUserStatus(userId: string, newStatus: WorkStatus) {
 
   if (userSnap.exists()) {
     const userData = userSnap.data() as TeamMember;
-    const today = new Date();
-    const dayString = today.toISOString().split('T')[0];
+    const today = startOfDay(new Date());
 
-    const historyIndex = userData.history.findIndex(h => fromTimestamp(h.date).toISOString().startsWith(dayString));
+    const historyIndex = userData.history.findIndex(h => startOfDay(fromTimestamp(h.date)).getTime() === today.getTime());
+    
     const newHistory = [...userData.history];
 
     if (historyIndex > -1) {
@@ -88,21 +90,21 @@ export async function updateFutureStatus(userId: string, date: Date, newStatus: 
 
     if (userSnap.exists()) {
         const userData = userSnap.data() as TeamMember;
-        const dayString = date.toISOString().split('T')[0];
+        const targetDay = startOfDay(date);
         
-        const historyIndex = userData.history.findIndex(h => fromTimestamp(h.date).toISOString().startsWith(dayString));
+        const historyIndex = userData.history.findIndex(h => startOfDay(fromTimestamp(h.date)).getTime() === targetDay.getTime());
         const newHistory = [...userData.history];
 
         if (historyIndex > -1) {
-            newHistory[historyIndex] = { date: date, status: newStatus };
+            newHistory[historyIndex] = { date: targetDay, status: newStatus };
         } else {
-            newHistory.push({ date: date, status: newStatus });
+            newHistory.push({ date: targetDay, status: newStatus });
         }
 
         const updateData: any = { history: newHistory };
-
-        const todayString = new Date().toISOString().split('T')[0];
-        if (dayString === todayString) {
+        
+        const today = startOfDay(new Date());
+        if (targetDay.getTime() === today.getTime()) {
           updateData.status = newStatus;
         }
 

@@ -35,8 +35,8 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
 
   const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | undefined => {
     if (!today) return undefined;
-    const dayString = day.toISOString().split('T')[0];
-    const historyEntry = member.history.find(h => h.date.toISOString().startsWith(dayString));
+    const targetDay = startOfDay(day);
+    const historyEntry = member.history.find(h => startOfDay(h.date).getTime() === targetDay.getTime());
     if (historyEntry) return historyEntry.status;
     if (isToday(day)) return member.status;
     return undefined;
