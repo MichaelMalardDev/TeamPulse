@@ -14,6 +14,8 @@ import { z } from 'genkit';
 const SuggestMeetingDayInputSchema = z.object({
   teamData: z.array(z.object({
     name: z.string().describe("Team member's name."),
+    role: z.string().describe("Team member's role."),
+    avatarUrl: z.string().describe("URL for the team member's avatar."),
     history: z.array(z.object({
       date: z.string().describe("Date in YYYY-MM-DD format."),
       status: z.string().describe("Presence status: 'In Office' or 'Remote'."),
@@ -27,6 +29,12 @@ const SuggestMeetingDayOutputSchema = z.object({
   suggestedDay: z.string().describe("The best day for a meeting in YYYY-MM-DD format. Should be a future weekday."),
   expectedAttendees: z.number().describe("The number of team members expected to be 'In Office' on that day."),
   justification: z.string().describe("A brief, friendly (1-2 sentence) justification for why this day was chosen."),
+  attendees: z.array(z.object({
+    name: z.string().describe("Team member's name."),
+    role: z.string().describe("Team member's role."),
+    avatarUrl: z.string().describe("URL for the team member's avatar."),
+    status: z.string().describe("The member's status for the suggested day ('In Office', 'Remote', or 'No Status')."),
+  })).describe("A list of all team members and their status for the suggested day."),
 });
 
 export type SuggestMeetingDayOutput = z.infer<typeof SuggestMeetingDayOutputSchema>;
@@ -48,11 +56,13 @@ Your analysis must only consider future weekdays. Today's date is ${new Date().t
 From the future dates, identify the weekday with the highest number of team members marked as 'In Office'.
 If there's a tie, suggest the earliest possible day.
 
-Provide the best day, the number of people expected in the office, and a short, friendly justification.
+For the suggested day, you must provide a list of all team members and their status for that specific day. If a member has no status recorded for that day, their status should be 'No Status'.
+
+Provide the best day, the number of people expected in the office, a short, friendly justification, and the list of all team members with their statuses for that day.
 
 Team Data:
 {{#each teamData}}
-- Member: {{name}}
+- Member: {{name}} ({{role}}, {{avatarUrl}})
   - Presence:
   {{#each history}}
     - {{date}}: {{status}}
