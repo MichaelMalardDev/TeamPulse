@@ -112,6 +112,38 @@ export async function updateFutureStatus(userId: string, date: Date, newStatus: 
     }
 }
 
+export async function batchUpdateUserStatus(userId: string, dates: Date[], newStatus: WorkStatus) {
+  const userDocRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userDocRef);
+
+  if (userSnap.exists()) {
+    const userData = userSnap.data() as TeamMember;
+    const newHistory = [...userData.history];
+
+    dates.forEach(date => {
+      const targetDay = startOfDay(date);
+      const historyIndex = newHistory.findIndex(h => startOfDay(fromTimestamp(h.date)).getTime() === targetDay.getTime());
+      
+      if (historyIndex > -1) {
+        newHistory[historyIndex].status = newStatus;
+      } else {
+        newHistory.push({ date: targetDay, status: newStatus });
+      }
+    });
+
+    const updateData: any = { history: newHistory };
+
+    // Check if one of the updated dates is today
+    const today = startOfDay(new Date());
+    if (dates.some(d => startOfDay(d).getTime() === today.getTime())) {
+      updateData.status = newStatus;
+    }
+
+    await updateDoc(userDocRef, updateData);
+  }
+}
+
+
 export async function getRemoteTeamMembers(): Promise<TeamMember[]> {
   const usersCollectionRef = collection(db, 'users');
   const q = query(usersCollectionRef, where("status", "==", "Remote"));
