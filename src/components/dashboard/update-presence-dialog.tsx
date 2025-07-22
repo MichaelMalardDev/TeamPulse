@@ -109,7 +109,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
           </div>
           <div className="flex flex-col">
             <Label className="mb-2 block font-medium">2. Set your status for each day</Label>
-            <ScrollArea className="flex-grow border rounded-md p-4">
+            <ScrollArea className="h-72 w-full flex-grow border rounded-md p-4">
                 {selectedDays && selectedDays.length > 0 ? (
                   <div className="space-y-4">
                     {selectedDays
