@@ -35,7 +35,7 @@ export default function HistoricalCalendar({ member }: HistoricalCalendarProps) 
           remote: 'bg-blue-500/20 text-blue-200',
           office: 'bg-green-500/20 text-green-200',
         }}
-        disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+        disabled={(date) => date < new Date('1900-01-01')}
       />
       <div className="mt-4 space-y-2 text-sm">
         <div className="flex items-center gap-2">

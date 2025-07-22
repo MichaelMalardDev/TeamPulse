@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Laptop } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDays, format, isToday, startOfDay, isWeekend } from 'date-fns';
+import { addDays, format, isToday, startOfDay, isWeekend, isBefore } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -66,14 +66,29 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
     setWeekDays(days);
   }, [today]);
 
-  const getStatusForDay = (member: TeamMember, day: Date): WorkStatus => {
+  const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | null => {
     const targetDay = startOfDay(day);
     const historyEntry = member.history.find(h => startOfDay(h.date).getTime() === targetDay.getTime());
-    return historyEntry ? historyEntry.status : isToday(day) ? member.status : 'In Office';
+
+    if (historyEntry) {
+      return historyEntry.status;
+    }
+
+    if (isToday(targetDay)) {
+        return member.status;
+    }
+    
+    // For future dates, default to In Office. For past dates, return null if no entry.
+    if (!isBefore(targetDay, today)) {
+        return 'In Office';
+    }
+
+    return null;
   }
 
   const handleOpenDialog = (member: TeamMember, day: Date) => {
-    const currentStatus = getStatusForDay(member, day);
+    if (isBefore(startOfDay(day), today)) return;
+    const currentStatus = getStatusForDay(member, day) || 'In Office';
     setSelectedEntry({ member, day });
     setNewStatus(currentStatus);
   };
@@ -201,7 +216,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                     </TableCell>
                     {weekDays.map((day) => {
                         const status = getStatusForDay(member, day);
-                        const canClick = member.id === currentUser.id;
+                        const canClick = member.id === currentUser.id && !isBefore(startOfDay(day), today);
                         return (
                         <TableCell 
                             key={day.toISOString()} 
