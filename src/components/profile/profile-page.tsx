@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/firestore';
 import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import ProfileCalendar from './profile-calendar';
 
 export default function ProfilePage() {
   const { teamMember, loading } = useAuth();
@@ -60,48 +61,63 @@ export default function ProfilePage() {
           Your Profile
         </h1>
         <p className="text-muted-foreground">
-          View and edit your personal information.
+          View and edit your personal information and presence history.
         </p>
       </div>
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={teamMember.avatarUrl} alt={teamMember.name} data-ai-hint="profile avatar" />
-              <AvatarFallback>{teamMember.name.substring(0,2)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-2xl">{teamMember.name}</CardTitle>
-              <CardDescription>{teamMember.role}</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input 
-                id="name" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Input 
-                id="role" 
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required 
-              />
-            </div>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-1 space-y-8">
+            <Card>
+                <CardHeader>
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                    <AvatarImage src={teamMember.avatarUrl} alt={teamMember.name} data-ai-hint="profile avatar" />
+                    <AvatarFallback>{teamMember.name.substring(0,2)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                    <CardTitle className="text-2xl">{teamMember.name}</CardTitle>
+                    <CardDescription>{teamMember.role}</CardDescription>
+                    </div>
+                </div>
+                </CardHeader>
+                <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input 
+                        id="name" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required 
+                    />
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Input 
+                        id="role" 
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        required 
+                    />
+                    </div>
+                    <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                </form>
+                </CardContent>
+            </Card>
+        </div>
+        <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Presence Calendar</CardTitle>
+                    <CardDescription>Your historical and planned presence. Click on a day to see details.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ProfileCalendar member={teamMember} />
+                </CardContent>
+            </Card>
+        </div>
+      </div>
     </div>
   );
 }
