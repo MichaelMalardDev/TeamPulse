@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 
 type WeeklyOverviewProps = {
   team: TeamMember[];
+  currentUser: TeamMember;
   onTeamUpdate: (updatedTeam: TeamMember[]) => void;
 };
 
@@ -47,7 +48,7 @@ function StatusToggleButton({
   );
 }
 
-export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewProps) {
+export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: WeeklyOverviewProps) {
   const [weekDays, setWeekDays] = useState<Date[]>([]);
   const [today, setToday] = useState(startOfDay(new Date()));
   const [selectedEntry, setSelectedEntry] = useState<{ member: TeamMember, day: Date } | null>(null);
@@ -200,7 +201,7 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
                     </TableCell>
                     {weekDays.map((day) => {
                         const status = getStatusForDay(member, day);
-                        const canClick = true;
+                        const canClick = member.id === currentUser.id;
                         return (
                         <TableCell 
                             key={day.toISOString()} 

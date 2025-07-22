@@ -66,7 +66,7 @@ export default function DashboardPage() {
           </div>
       </motion.div>
 
-      <WeeklyOverview team={team} onTeamUpdate={fetchTeamData} />
+      <WeeklyOverview team={team} currentUser={currentUser} onTeamUpdate={fetchTeamData} />
 
       <TeamOverview team={team} />
     </div>
