@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { TeamMember, WorkStatus } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,16 +9,25 @@ import { Building, Laptop } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDays, format, isToday, startOfDay } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 type WeeklyOverviewProps = {
   team: TeamMember[];
 };
 
 export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
-  const today = startOfDay(new Date());
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(today, i));
+  const [weekDays, setWeekDays] = useState<Date[]>([]);
+  const [today, setToday] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const todayDate = startOfDay(new Date());
+    setToday(todayDate);
+    setWeekDays(Array.from({ length: 7 }, (_, i) => addDays(todayDate, i)));
+  }, []);
 
   const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | undefined => {
+    if (!today) return undefined;
     const dayString = day.toISOString().split('T')[0];
     const historyEntry = member.history.find(h => h.date.toISOString().startsWith(dayString));
     if (historyEntry) return historyEntry.status;
@@ -25,6 +35,23 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
     return undefined;
   }
   
+  if (!today) {
+    return (
+        <div className="space-y-4">
+            <h2 className="text-xl font-semibold">This Week</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+            </div>
+            <Card>
+                <CardContent className="p-0">
+                   <Skeleton className="h-96" />
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   const inOfficeCount = team.filter(member => getStatusForDay(member, today) === 'In Office').length;
   const remoteCount = team.filter(member => getStatusForDay(member, today) === 'Remote').length;
 
