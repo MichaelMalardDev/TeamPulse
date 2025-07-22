@@ -46,7 +46,7 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <div />
@@ -102,7 +102,7 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
             </PopoverContent>
         )}
       </Popover>
-      <div className="mt-4 flex gap-4 text-sm">
+      <div className="mt-4 flex gap-4 text-sm justify-center">
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 rounded-full bg-green-500/20 border border-green-500" />
           <span>In Office</span>
