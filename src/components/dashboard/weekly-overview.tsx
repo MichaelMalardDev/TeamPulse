@@ -69,23 +69,10 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
   const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | null => {
     const targetDay = startOfDay(day);
     const historyEntry = member.history.find(h => startOfDay(h.date).getTime() === targetDay.getTime());
-
-    if (historyEntry) {
-      return historyEntry.status;
-    }
-    
-    // If it's today and there's no history entry, check the current status field.
-    if (isToday(targetDay)) {
-        const todayHistory = member.history.find(h => startOfDay(h.date).getTime() === today.getTime());
-        if (!todayHistory) return null; // If no history for today, show nothing.
-    }
-    
-    // For any day without a history entry, return null.
-    return null;
+    return historyEntry?.status || null;
   }
 
   const handleOpenDialog = (member: TeamMember, day: Date) => {
-    if (isBefore(startOfDay(day), today) && !isToday(day)) return;
     const currentStatus = getStatusForDay(member, day) || 'In Office';
     setSelectedEntry({ member, day });
     setNewStatus(currentStatus);
@@ -214,29 +201,29 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                     </TableCell>
                     {weekDays.map((day) => {
                         const status = getStatusForDay(member, day);
-                        const canClick = member.id === currentUser.id && !isBefore(startOfDay(day), today) || isToday(day);
+                        const canClick = member.id === currentUser.id;
                         return (
                         <TableCell 
                             key={day.toISOString()} 
                             className={cn(
                               "text-center h-20",
-                              canClick ? "cursor-pointer hover:bg-muted/50" : "",
-                              !canClick && isBefore(startOfDay(day), today) ? "opacity-50" : "",
+                              canClick ? "cursor-pointer hover:bg-muted/50" : "opacity-50",
                               isToday(day) ? 'bg-accent/20' : ''
                             )}
                             onClick={() => canClick && handleOpenDialog(member, day)}
                         >
-                            {status === 'In Office' && (
+                            {status === 'In Office' ? (
                             <div className="flex flex-col items-center justify-center gap-1 text-green-400">
                                 <Building className="h-5 w-5" />
                                 <span className="text-xs font-semibold">In Office</span>
                             </div>
-                            )}
-                            {status === 'Remote' && (
+                            ) : status === 'Remote' ? (
                             <div className="flex flex-col items-center justify-center gap-1 text-blue-400">
                                 <Laptop className="h-5 w-5" />
                                 <span className="text-xs font-semibold">Remote</span>
                             </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
                             )}
                         </TableCell>
                         )
