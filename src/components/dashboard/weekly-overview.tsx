@@ -1,3 +1,4 @@
+
 'use client';
 
 import { TeamMember, WorkStatus } from '@/lib/data';
@@ -32,9 +33,15 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
               <TableRow>
                 <TableHead className="w-[240px]">Team Member</TableHead>
                 {weekDays.map((day) => (
-                  <TableHead key={day.toISOString()} className={cn("text-center", isToday(day) ? 'text-primary' : '')}>
-                     <p className="text-sm font-medium text-muted-foreground">{format(day, 'EEE')}</p>
-                     <p className="text-2xl font-bold">{format(day, 'd')}</p>
+                  <TableHead 
+                    key={day.toISOString()} 
+                    className={cn(
+                      "text-center rounded-t-lg", 
+                      isToday(day) ? 'bg-primary/10 text-primary' : ''
+                    )}
+                  >
+                     <p className="text-sm font-medium">{format(day, 'EEE')}</p>
+                     <p className="text-3xl font-bold">{format(day, 'd')}</p>
                   </TableHead>
                 ))}
               </TableRow>
@@ -57,7 +64,7 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
                   {weekDays.map((day) => {
                     const status = getStatusForDay(member, day);
                     return (
-                      <TableCell key={day.toISOString()} className={cn("text-center", isToday(day) ? 'bg-secondary/50' : '')}>
+                      <TableCell key={day.toISOString()} className={cn("text-center", isToday(day) ? 'bg-primary/10' : '')}>
                         {status === 'In Office' && (
                           <div className="flex flex-col items-center justify-center gap-1 text-green-400">
                             <Building className="h-5 w-5" />
@@ -83,3 +90,4 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
     </div>
   );
 }
+
