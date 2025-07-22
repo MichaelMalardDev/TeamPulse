@@ -63,7 +63,7 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
             remote: 'bg-blue-500/20 text-blue-200',
             office: 'bg-green-500/20 text-green-200',
           }}
-          disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+          disabled={(date) => date < new Date('1900-01-01')}
           components={{
             DayContent: (props) => {
               const status = getStatusForDay(props.date);

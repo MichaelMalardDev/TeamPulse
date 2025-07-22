@@ -8,7 +8,12 @@ type TeamOverviewProps = {
 
 export default function TeamOverview({ team }: TeamOverviewProps) {
   return (
-    <div className="space-y-4">
+    <motion.div 
+      className="space-y-4"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.5 }}
+    >
       <h2 className="text-xl font-semibold">Team Overview</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         <AnimatePresence>
@@ -18,13 +23,13 @@ export default function TeamOverview({ team }: TeamOverviewProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
+              transition={{ duration: 0.3, delay: (index * 0.05) + 0.5 }}
             >
               <UserStatusCard member={member} />
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

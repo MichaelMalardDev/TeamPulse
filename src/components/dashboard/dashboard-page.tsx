@@ -8,6 +8,7 @@ import TeamOverview from './team-overview';
 import WeeklyOverview from './weekly-overview';
 import { useAuth } from '@/hooks/use-auth';
 import UpdatePresenceDialog from './update-presence-dialog';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
   const { teamMember, loading } = useAuth();
@@ -51,13 +52,19 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground">Your team's status at a glance.</p>
-        </div>
-        <UpdatePresenceDialog member={currentUser} onUpdate={fetchTeamData} />
-      </div>
+       <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+                <p className="text-muted-foreground">Your team's status at a glance.</p>
+            </div>
+            <UpdatePresenceDialog member={currentUser} onUpdate={fetchTeamData} />
+          </div>
+      </motion.div>
 
       <WeeklyOverview team={team} onTeamUpdate={fetchTeamData} />
 

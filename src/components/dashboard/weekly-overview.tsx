@@ -7,56 +7,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Laptop } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDays, format, isToday, startOfDay, isWeekend, isFuture, isPast } from 'date-fns';
+import { addDays, format, isToday, startOfDay, isWeekend } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { updateFutureStatus } from '@/lib/firestore';
+import { motion } from 'framer-motion';
 
 type WeeklyOverviewProps = {
   team: TeamMember[];
   onTeamUpdate: (updatedTeam: TeamMember[]) => void;
 };
 
-function StatusToggleButton({
-  status,
-  currentStatus,
-  onStatusChange,
-}: {
-  status: WorkStatus;
-  currentStatus: WorkStatus | null;
-  onStatusChange: (status: WorkStatus) => void;
-}) {
-  const Icon = status === 'In Office' ? Building : Laptop;
-  const isActive = status === currentStatus;
-
-  return (
-    <Button
-      variant={isActive ? 'default' : 'outline'}
-      size="lg"
-      className={cn("w-full justify-start", isActive ? "shadow-md" : "")}
-      onClick={() => onStatusChange(status)}
-    >
-      <Icon className="mr-2 h-5 w-5" />
-      {status}
-    </Button>
-  );
-}
-
 export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewProps) {
   const [weekDays, setWeekDays] = useState<Date[]>([]);
-  const [today, setToday] = useState<Date | null>(null);
+  const [today, setToday] = useState(startOfDay(new Date()));
   const [selectedEntry, setSelectedEntry] = useState<{ member: TeamMember, day: Date } | null>(null);
-  const [newStatus, setNewStatus] = useState<WorkStatus | null>(null);
+  const [newStatus, setNewStatus] = useState<WorkStatus>('In Office');
 
   useEffect(() => {
-    const todayDate = startOfDay(new Date());
-    setToday(todayDate);
-    
     let days: Date[] = [];
-    let currentDate = todayDate;
+    let currentDate = today;
     while(days.length < 5) {
       if (!isWeekend(currentDate)) {
         days.push(currentDate);
@@ -64,31 +38,22 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
       currentDate = addDays(currentDate, 1);
     }
     setWeekDays(days);
-  }, []);
+  }, [today]);
 
-  const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | undefined => {
-    if (!today) return undefined;
+  const getStatusForDay = (member: TeamMember, day: Date): WorkStatus => {
     const targetDay = startOfDay(day);
     const historyEntry = member.history.find(h => startOfDay(h.date).getTime() === targetDay.getTime());
-    
-    if (historyEntry) return historyEntry.status;
-    if (isToday(day)) return member.status;
-    if (isFuture(day)) return 'In Office'; // Default for future dates
-    
-    return undefined;
+    return historyEntry ? historyEntry.status : isToday(day) ? member.status : 'In Office';
   }
 
   const handleOpenDialog = (member: TeamMember, day: Date) => {
-    // Prevent opening dialog for past days, except today
-    if (isPast(day) && !isToday(day)) return;
-
     const currentStatus = getStatusForDay(member, day);
     setSelectedEntry({ member, day });
-    setNewStatus(currentStatus || 'In Office');
+    setNewStatus(currentStatus);
   };
   
   const handleStatusUpdate = async () => {
-    if (!selectedEntry || !newStatus) return;
+    if (!selectedEntry) return;
 
     const { member, day } = selectedEntry;
     
@@ -96,10 +61,9 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
     onTeamUpdate(team); // This will trigger a re-fetch of all data
 
     setSelectedEntry(null);
-    setNewStatus(null);
   };
   
-  if (!today) {
+  if (!team.length) {
     return (
         <div className="space-y-4">
             <h2 className="text-xl font-semibold">This Week</h2>
@@ -122,104 +86,126 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">This Week</h2>
+      <motion.h2 
+        className="text-xl font-semibold"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        This Week
+      </motion.h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">In Office</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{inOfficeCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {inOfficeCount === 1 ? 'member' : 'members'} in the office today
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Remote</CardTitle>
-            <Laptop className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{remoteCount}</div>
-            <p className="text-xs text-muted-foreground">
-               {remoteCount === 1 ? 'member' : 'members'} working remotely today
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+        >
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">In Office</CardTitle>
+                <Building className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{inOfficeCount}</div>
+                <p className="text-xs text-muted-foreground">
+                {inOfficeCount === 1 ? 'member' : 'members'} in the office today
+                </p>
+            </CardContent>
+            </Card>
+        </motion.div>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+        >
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Remote</CardTitle>
+                <Laptop className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{remoteCount}</div>
+                <p className="text-xs text-muted-foreground">
+                {remoteCount === 1 ? 'member' : 'members'} working remotely today
+                </p>
+            </CardContent>
+            </Card>
+        </motion.div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[240px]">Team Member</TableHead>
-                {weekDays.map((day) => (
-                  <TableHead 
-                    key={day.toISOString()} 
-                    className={cn(
-                      "text-center rounded-t-lg", 
-                      isToday(day) ? 'bg-primary/10 text-primary' : ''
-                    )}
-                  >
-                     <p className="text-sm font-medium">{format(day, 'EEE')}</p>
-                     <p className="text-3xl font-bold">{format(day, 'd')}</p>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {team.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.avatarUrl} alt={member.name} />
-                        <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{member.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.role}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  {weekDays.map((day) => {
-                    const status = getStatusForDay(member, day);
-                    const isPastDay = isPast(day) && !isToday(day);
-                    return (
-                      <TableCell 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <Card>
+            <CardContent className="p-0">
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead className="w-[240px]">Team Member</TableHead>
+                    {weekDays.map((day) => (
+                    <TableHead 
                         key={day.toISOString()} 
                         className={cn(
-                          "text-center hover:bg-muted/50", 
-                          isToday(day) ? 'bg-primary/10' : '',
-                          isPastDay ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                        "text-center rounded-t-lg", 
+                        isToday(day) ? 'bg-accent text-accent-foreground' : ''
                         )}
-                        onClick={() => !isPastDay && handleOpenDialog(member, day)}
-                      >
-                        {status === 'In Office' && (
-                          <div className="flex flex-col items-center justify-center gap-1 text-green-400">
-                            <Building className="h-5 w-5" />
-                            <span className="text-xs font-semibold">In Office</span>
-                          </div>
-                        )}
-                        {status === 'Remote' && (
-                          <div className="flex flex-col items-center justify-center gap-1 text-blue-400">
-                            <Laptop className="h-5 w-5" />
-                            <span className="text-xs font-semibold">Remote</span>
-                          </div>
-                        )}
-                         {!status && <span className="text-muted-foreground">-</span>}
-                      </TableCell>
-                    )
-                  })}
+                    >
+                        <p className="text-sm font-medium">{format(day, 'EEE')}</p>
+                        <p className="text-3xl font-bold">{format(day, 'd')}</p>
+                    </TableHead>
+                    ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                {team.map((member) => (
+                    <TableRow key={member.id}>
+                    <TableCell>
+                        <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={member.avatarUrl} alt={member.name} />
+                            <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold">{member.name}</p>
+                            <p className="text-sm text-muted-foreground">{member.role}</p>
+                        </div>
+                        </div>
+                    </TableCell>
+                    {weekDays.map((day) => {
+                        const status = getStatusForDay(member, day);
+                        return (
+                        <TableCell 
+                            key={day.toISOString()} 
+                            className={cn(
+                            "text-center cursor-pointer hover:bg-muted/50", 
+                            isToday(day) ? 'bg-accent/20' : ''
+                            )}
+                            onClick={() => handleOpenDialog(member, day)}
+                        >
+                            {status === 'In Office' && (
+                            <div className="flex flex-col items-center justify-center gap-1 text-green-400">
+                                <Building className="h-5 w-5" />
+                                <span className="text-xs font-semibold">In Office</span>
+                            </div>
+                            )}
+                            {status === 'Remote' && (
+                            <div className="flex flex-col items-center justify-center gap-1 text-blue-400">
+                                <Laptop className="h-5 w-5" />
+                                <span className="text-xs font-semibold">Remote</span>
+                            </div>
+                            )}
+                        </TableCell>
+                        )
+                    })}
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+            </CardContent>
+        </Card>
+      </motion.div>
 
       <Dialog open={!!selectedEntry} onOpenChange={(isOpen) => !isOpen && setSelectedEntry(null)}>
         <DialogContent>
@@ -231,17 +217,17 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
                   on {format(selectedEntry.day, 'EEEE, MMMM d')}
                 </p>
               </DialogHeader>
-              <div className="py-4 space-y-2">
-                  <StatusToggleButton 
-                    status="In Office"
-                    currentStatus={newStatus}
-                    onStatusChange={setNewStatus}
-                  />
-                  <StatusToggleButton 
-                    status="Remote"
-                    currentStatus={newStatus}
-                    onStatusChange={setNewStatus}
-                  />
+              <div className="py-4">
+                <RadioGroup value={newStatus} onValueChange={(value: WorkStatus) => setNewStatus(value)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="In Office" id="in-office" />
+                    <Label htmlFor="in-office">In Office</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Remote" id="remote" />
+                    <Label htmlFor="remote">Remote</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedEntry(null)}>Cancel</Button>
