@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Calendar } from '@/components/ui/calendar';
@@ -25,7 +26,7 @@ export default function HistoricalCalendar({ member }: HistoricalCalendarProps) 
         mode="single"
         selected={date}
         onSelect={setDate}
-        className="rounded-md border"
+        className="p-0"
         modifiers={{
           remote: remoteDays,
           office: officeDays,
