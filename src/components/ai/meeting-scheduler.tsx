@@ -85,7 +85,7 @@ export default function MeetingScheduler() {
                     <h3 className="text-lg font-semibold text-center mb-4">Team Status on {format(parseISO(state.result.suggestedDay), 'MMM do')}</h3>
                      <Accordion type="single" collapsible className="w-full">
                         {state.result.attendees.map((attendee) => (
-                           <AccordionItem value={attendee.name} key={attendee.name}>
+                           <AccordionItem value={attendee.userId} key={attendee.userId}>
                              <AccordionTrigger className="hover:no-underline">
                                <div className="flex items-center gap-4">
                                  <Avatar className="h-10 w-10">

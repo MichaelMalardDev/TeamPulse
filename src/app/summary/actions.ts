@@ -16,6 +16,7 @@ export async function suggestMeetingDayAction(): Promise<ActionState> {
     
     // We only need names and history for the AI
     const teamData = teamMembers.map(member => ({
+        id: member.id,
         name: member.name,
         role: member.role,
         avatarUrl: member.avatarUrl,
