@@ -33,7 +33,7 @@ const SuggestMeetingDayOutputSchema = z.object({
   attendees: z.array(z.object({
     userId: z.string().describe("Team member's unique ID."),
     name: z.string().describe("Team member's name."),
-    role: z.string().describe("Team member's role."),
+    role: z.string().describe("Team member's role as a string."),
     avatarUrl: z.string().describe("URL for the team member's avatar."),
     status: z.string().describe("The member's status for the suggested day ('In Office', 'Remote', or 'No Status')."),
   })).describe("A list of all team members and their status for the suggested day."),
@@ -58,7 +58,7 @@ Your analysis must only consider future weekdays. Today's date is ${new Date().t
 From the future dates, identify the weekday with the highest number of team members marked as 'In Office'.
 If there's a tie, suggest the earliest possible day.
 
-For the suggested day, you must provide a list of all team members, including their unique userId, and their status for that specific day. If a member has no status recorded for that day, their status should be 'No Status'.
+For the suggested day, you must provide a list of all team members, including their unique userId, their role as a string, and their status for that specific day. If a member has no status recorded for that day, their status should be 'No Status'.
 
 Provide the best day, the number of people expected in the office, a short, friendly justification, and the list of all team members with their statuses for that day.
 
