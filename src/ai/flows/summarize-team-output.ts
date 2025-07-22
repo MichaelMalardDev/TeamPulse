@@ -24,7 +24,14 @@ const SummarizeTeamOutputInputSchema = z.object({
 export type SummarizeTeamOutputInput = z.infer<typeof SummarizeTeamOutputInputSchema>;
 
 const SummarizeTeamOutputOutputSchema = z.object({
-  summary: z.string().describe('A summary of the team output, highlighting overall contributions and suggesting task re-balancing opportunities.'),
+  overallSummary: z.string().describe("A 2-3 sentence high-level summary of the team's work for the day."),
+  productivityAnalysis: z.array(z.object({
+    memberName: z.string().describe("The team member's name."),
+    productivityScore: z.number().min(0).max(100).describe("A productivity score from 0 to 100 based on their output."),
+    justification: z.string().describe("A brief (1-2 sentence) justification for the score."),
+  })).describe("An analysis of each team member's productivity."),
+  blockers: z.array(z.string()).describe("A list of potential blockers or issues identified from the team's output."),
+  suggestions: z.array(z.string()).describe("A list of actionable suggestions to improve team productivity or address blockers."),
 });
 
 export type SummarizeTeamOutputOutput = z.infer<typeof SummarizeTeamOutputOutputSchema>;
@@ -37,13 +44,18 @@ const summarizeTeamOutputPrompt = ai.definePrompt({
   name: 'summarizeTeamOutputPrompt',
   input: {schema: SummarizeTeamOutputInputSchema},
   output: {schema: SummarizeTeamOutputOutputSchema},
-  prompt: `You are a team productivity expert. Review the daily outputs of the remote team members and provide a summary of their overall contributions, as well as suggestions for task re-balancing to improve overall team productivity.
+  prompt: `You are a team productivity expert. Review the daily outputs of the remote team members.
+
+You will provide a structured analysis including:
+1.  A brief, high-level summary of the team's collective work.
+2.  A productivity analysis for each member, assigning a score from 0-100. Base the score on completed tasks, progress made, and clarity of the update. Provide a short justification for each score.
+3.  A list of any potential blockers or challenges mentioned. If none, return an empty array.
+4.  A list of actionable suggestions for task re-balancing, collaboration, or process improvement.
 
 Team Output:
 {{#each teamOutput}}
-Member: {{memberName}}
-Output: {{dailyOutput}}
-\n
+- Member: {{memberName}}
+  - Output: {{dailyOutput}}
 {{/each}}`,
 });
 

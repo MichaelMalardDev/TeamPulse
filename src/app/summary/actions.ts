@@ -1,6 +1,6 @@
 'use server';
 
-import { summarizeTeamOutput, SummarizeTeamOutputInput } from '@/ai/flows/summarize-team-output';
+import { summarizeTeamOutput, SummarizeTeamOutputOutput } from '@/ai/flows/summarize-team-output';
 import { z } from 'zod';
 
 const ActionInputSchema = z.object({
@@ -13,7 +13,7 @@ const ActionInputSchema = z.object({
 });
 
 type ActionState = {
-  summary?: string;
+  result?: SummarizeTeamOutputOutput;
   error?: string;
   issues?: z.ZodIssue[];
 };
@@ -42,7 +42,7 @@ export async function generateSummaryAction(prevState: ActionState, formData: Fo
 
   try {
     const result = await summarizeTeamOutput(validation.data);
-    return { summary: result.summary };
+    return { result };
   } catch (e: any) {
     return {
       error: e.message || 'An unexpected error occurred.',
