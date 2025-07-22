@@ -161,3 +161,8 @@ export async function getRemoteTeamMembers(): Promise<TeamMember[]> {
       } as TeamMember;
   });
 }
+
+export async function updateUserProfile(userId: string, data: { name: string; role: string }) {
+  const userDocRef = doc(db, 'users', userId);
+  await updateDoc(userDocRef, data);
+}
