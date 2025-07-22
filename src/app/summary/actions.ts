@@ -18,7 +18,8 @@ export async function suggestMeetingDayAction(): Promise<ActionState> {
     const teamData = teamMembers.map(member => ({
         id: member.id,
         name: member.name,
-        role: member.role,
+        // Ensure role is a string
+        role: String(member.role),
         avatarUrl: member.avatarUrl,
         // Convert history dates to simple ISO strings
         history: member.history.map(h => ({
