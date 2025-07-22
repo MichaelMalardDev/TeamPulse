@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Laptop } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDays, format, isToday, startOfDay, isWeekend } from 'date-fns';
+import { addDays, format, isToday, startOfDay, isWeekend, isFuture } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -70,8 +70,11 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
     if (!today) return undefined;
     const targetDay = startOfDay(day);
     const historyEntry = member.history.find(h => startOfDay(h.date).getTime() === targetDay.getTime());
+    
     if (historyEntry) return historyEntry.status;
     if (isToday(day)) return member.status;
+    if (isFuture(day)) return 'In Office'; // Default for future dates
+    
     return undefined;
   }
 
