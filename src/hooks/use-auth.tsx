@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
-import { teamData, TeamMember, generateHistory } from '@/lib/data';
+import { teamData, TeamMember } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: 'New User',
             avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100',
             status: 'In Office',
-            history: generateHistory(newId)
+            history: [] // Start with empty history for new users
           };
           teamData.push(member);
         }

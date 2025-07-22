@@ -13,7 +13,7 @@ export interface TeamMember {
 const today = new Date();
 export const generateHistory = (userId: number): { date: Date; status: WorkStatus }[] => {
   const history: { date: Date; status: WorkStatus }[] = [];
-  // Generate from 30 days in the past to 7 days in the future
+  // Generate from 30 days in the past to 7 days in the future for existing users
   for (let i = -30; i <= 7; i++) {
     const date = new Date();
     date.setDate(today.getDate() + i);
