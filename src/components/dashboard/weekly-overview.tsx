@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { updateFutureStatus } from '@/lib/firestore';
 
 type WeeklyOverviewProps = {
   team: TeamMember[];
@@ -47,33 +48,14 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
     setNewStatus(currentStatus || 'In Office');
   };
   
-  const handleStatusUpdate = () => {
+  const handleStatusUpdate = async () => {
     if (!selectedEntry || !newStatus) return;
 
     const { member, day } = selectedEntry;
-    const dayString = day.toISOString().split('T')[0];
+    
+    await updateFutureStatus(member.id, day, newStatus);
+    onTeamUpdate(team); // This will trigger a re-fetch of all data
 
-    const updatedTeam = team.map(m => {
-      if (m.id === member.id) {
-        const historyIndex = m.history.findIndex(h => h.date.toISOString().startsWith(dayString));
-        const newHistory = [...m.history];
-        if (historyIndex > -1) {
-          newHistory[historyIndex] = { ...newHistory[historyIndex], status: newStatus };
-        } else {
-          newHistory.push({ date: day, status: newStatus });
-        }
-        
-        let currentStatus = m.status;
-        if (isToday(day)) {
-          currentStatus = newStatus;
-        }
-
-        return { ...m, status: currentStatus, history: newHistory };
-      }
-      return m;
-    });
-
-    onTeamUpdate(updatedTeam);
     setSelectedEntry(null);
     setNewStatus(null);
   };

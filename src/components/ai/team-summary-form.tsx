@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Wand2 } from 'lucide-react';
@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { teamData } from '@/lib/data';
+import { getRemoteTeamMembers } from '@/lib/firestore';
+import { TeamMember } from '@/lib/data';
 
 const initialState = {
   summary: undefined,
@@ -38,8 +39,18 @@ function SubmitButton() {
 
 export default function TeamSummaryForm() {
   const [state, formAction] = useActionState(generateSummaryAction, initialState);
+  const [remoteTeamMembers, setRemoteTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const remoteTeamMembers = teamData.filter(member => member.status === 'Remote');
+  useEffect(() => {
+    async function fetchRemoteMembers() {
+      setLoading(true);
+      const members = await getRemoteTeamMembers();
+      setRemoteTeamMembers(members);
+      setLoading(false);
+    }
+    fetchRemoteMembers();
+  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -52,25 +63,28 @@ export default function TeamSummaryForm() {
         </CardHeader>
         <form action={formAction}>
           <CardContent className="space-y-4">
-              {remoteTeamMembers.map((member, index) => (
-                  <div key={member.id} className="space-y-2 p-4 border rounded-lg bg-background">
-                      <input type="hidden" name={`teamOutput[${index}].memberName`} value={member.name} />
-                      <Label htmlFor={`output-${index}`} className="font-semibold">{member.name}</Label>
-                      <Textarea
-                          id={`output-${index}`}
-                          name={`teamOutput[${index}].dailyOutput`}
-                          placeholder={`What did ${member.name} work on today?`}
-                          rows={3}
-                          className="bg-card"
-                      />
-                  </div>
-              ))}
-              {remoteTeamMembers.length === 0 && (
+              {loading ? (
+                <p>Loading remote team members...</p>
+              ) : remoteTeamMembers.length > 0 ? (
+                remoteTeamMembers.map((member, index) => (
+                    <div key={member.id} className="space-y-2 p-4 border rounded-lg bg-background">
+                        <input type="hidden" name={`teamOutput[${index}].memberName`} value={member.name} />
+                        <Label htmlFor={`output-${index}`} className="font-semibold">{member.name}</Label>
+                        <Textarea
+                            id={`output-${index}`}
+                            name={`teamOutput[${index}].dailyOutput`}
+                            placeholder={`What did ${member.name} work on today?`}
+                            rows={3}
+                            className="bg-card"
+                        />
+                    </div>
+                ))
+              ) : (
                 <p className="text-sm text-muted-foreground p-4 text-center">No remote team members to summarize.</p>
               )}
           </CardContent>
           <CardFooter>
-            {remoteTeamMembers.length > 0 && <SubmitButton />}
+            {!loading && remoteTeamMembers.length > 0 && <SubmitButton />}
           </CardFooter>
         </form>
       </Card>

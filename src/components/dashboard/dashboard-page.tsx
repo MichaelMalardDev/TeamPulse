@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { teamData, TeamMember, WorkStatus } from '@/lib/data';
+import { TeamMember, WorkStatus } from '@/lib/data';
+import { getAllTeamMembers, updateUserStatus } from '@/lib/firestore';
 import StatusSelector from './status-selector';
 import TeamOverview from './team-overview';
 import WeeklyOverview from './weekly-overview';
@@ -10,20 +11,31 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardPage() {
   const { teamMember, loading } = useAuth();
-  const [team, setTeam] = useState<TeamMember[]>(teamData);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [currentUser, setCurrentUser] = useState<TeamMember | null>(null);
   const [currentStatus, setCurrentStatus] = useState<WorkStatus>('In Office');
+  const [isLoadingTeam, setIsLoadingTeam] = useState(true);
+
+  const fetchTeamData = async () => {
+    setIsLoadingTeam(true);
+    const teamData = await getAllTeamMembers();
+    setTeam(teamData);
+    setIsLoadingTeam(false);
+  };
+  
+  useEffect(() => {
+    fetchTeamData();
+  }, []);
 
   useEffect(() => {
     if (teamMember) {
       const userInTeam = team.find(m => m.id === teamMember.id);
       if (userInTeam) {
         setCurrentUser(userInTeam);
-        const today = new Date().toISOString().split('T')[0];
-        const todaysRecord = userInTeam.history.find(h => h.date.toISOString().startsWith(today));
-        setCurrentStatus(todaysRecord ? todaysRecord.status : userInTeam.status);
-      } else {
-        // If the user is new and was just added to teamData
+        setCurrentStatus(userInTeam.status);
+      } else if (teamMember) {
+         // This handles the case where the logged-in user's data is loaded
+         // before the full team data is fetched.
         setCurrentUser(teamMember);
         setCurrentStatus(teamMember.status);
       }
@@ -33,46 +45,20 @@ export default function DashboardPage() {
 
   const handleTeamUpdate = (updatedTeam: TeamMember[]) => {
     setTeam(updatedTeam);
-    // This is a simple way to update the "master" data.
-    // In a real app, this would be an API call.
-    updatedTeam.forEach(updatedMember => {
-      const index = teamData.findIndex(m => m.id === updatedMember.id);
-      if (index !== -1) {
-        teamData[index] = updatedMember;
-      }
-    });
+    fetchTeamData();
   }
 
-  const handleStatusChange = (newStatus: WorkStatus) => {
+  const handleStatusChange = async (newStatus: WorkStatus) => {
     if (!currentUser) return;
     
     setCurrentStatus(newStatus);
-    const today = new Date();
+    await updateUserStatus(currentUser.id, newStatus);
     
-    const updatedTeam = team.map((member) => {
-      if (member.id === currentUser.id) {
-        return { ...member, status: newStatus };
-      }
-      return member;
-    });
-
-    const userInTeam = updatedTeam.find(m => m.id === currentUser.id);
-    if(userInTeam) {
-      const dayString = today.toISOString().split('T')[0];
-      const historyIndex = userInTeam.history.findIndex(h => h.date.toISOString().startsWith(dayString));
-      const newHistory = [...userInTeam.history];
-      if (historyIndex > -1) {
-        newHistory[historyIndex] = { ...newHistory[historyIndex], status: newStatus };
-      } else {
-        newHistory.push({ date: today, status: newStatus });
-      }
-      userInTeam.history = newHistory;
-    }
-    
-    handleTeamUpdate(updatedTeam);
+    // Refresh data after update
+    fetchTeamData();
   };
 
-  if (loading || !currentUser) {
+  if (loading || isLoadingTeam || !currentUser) {
     return <div>Loading user data...</div>;
   }
 
@@ -88,7 +74,7 @@ export default function DashboardPage() {
         <StatusSelector currentStatus={currentStatus} onStatusChange={handleStatusChange} />
       </div>
 
-      <WeeklyOverview team={team} onTeamUpdate={handleTeamUpdate} />
+      <WeeklyOverview team={team} onTeamUpdate={fetchTeamData} />
 
       <TeamOverview team={team} />
     </div>

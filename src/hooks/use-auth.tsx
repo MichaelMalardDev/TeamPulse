@@ -5,7 +5,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
-import { teamData, TeamMember } from '@/lib/data';
+import { getTeamMember, createTeamMember } from '@/lib/firestore';
+import { TeamMember } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
@@ -25,23 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        let member = teamData.find(m => m.name.split(' ')[0] === firebaseUser.displayName?.split(' ')[0]);
-        if (!member && firebaseUser.displayName) {
-          const newId = Math.max(...teamData.map(m => m.id)) + 1;
-          member = {
-            id: newId,
-            name: firebaseUser.displayName,
-            role: 'New User',
-            avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100',
-            status: 'In Office',
-            history: [] // Start with empty history for new users
-          };
-          teamData.push(member);
+        let member = await getTeamMember(firebaseUser.uid);
+        if (!member) {
+          member = await createTeamMember(firebaseUser);
         }
-        setTeamMember(member || null);
+        setTeamMember(member);
       } else {
         setTeamMember(null);
       }
