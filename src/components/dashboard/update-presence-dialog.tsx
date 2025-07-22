@@ -151,12 +151,12 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
           Update Presence
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Update Your Presence</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
-          <div>
+        <div className="flex flex-col md:flex-row gap-8 py-4">
+          <div className="flex-shrink-0">
             <Label className="mb-2 block font-medium">1. Select a date range</Label>
             <Calendar
               mode="range"
@@ -166,9 +166,9 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
               disabled={(date) => date < startOfDay(new Date()) || isWeekend(date)}
             />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-grow min-w-0">
             <Label className="mb-2 block font-medium">2. Set your status for each day</Label>
-            <ScrollArea className="h-72 w-full flex-grow border rounded-md p-4">
+            <ScrollArea className="h-64 w-full flex-grow border rounded-md p-4">
                 {selectedDays && selectedDays.length > 0 ? (
                   <div className="space-y-4">
                     {selectedDays
