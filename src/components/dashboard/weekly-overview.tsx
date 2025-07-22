@@ -8,14 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Laptop, CalendarX } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDays, format, isToday, startOfDay, isWeekend, isBefore } from 'date-fns';
+import { addDays, format, isToday, startOfDay, isWeekend } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { updateFutureStatus } from '@/lib/firestore';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type WeeklyOverviewProps = {
   team: TeamMember[];
@@ -151,7 +151,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                 <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{inOfficeCount}</div>
+                <motion.div key={`in-office-${inOfficeCount}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-2xl font-bold">{inOfficeCount}</motion.div>
                 <p className="text-xs text-muted-foreground">
                 {inOfficeCount === 1 ? 'member' : 'members'} in the office today
                 </p>
@@ -169,7 +169,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                 <Laptop className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{remoteCount}</div>
+                <motion.div key={`remote-${remoteCount}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-2xl font-bold">{remoteCount}</motion.div>
                 <p className="text-xs text-muted-foreground">
                 {remoteCount === 1 ? 'member' : 'members'} working remotely today
                 </p>
@@ -231,22 +231,32 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                             )}
                             onClick={() => handleOpenDialog(member, day)}
                         >
-                            {status === 'In Office' ? (
-                            <div className="flex flex-col items-center justify-center gap-1 text-green-400">
-                                <Building className="h-5 w-5" />
-                                <span className="text-xs font-semibold">In Office</span>
-                            </div>
-                            ) : status === 'Remote' ? (
-                            <div className="flex flex-col items-center justify-center gap-1 text-blue-400">
-                                <Laptop className="h-5 w-5" />
-                                <span className="text-xs font-semibold">Remote</span>
-                            </div>
-                            ) : (
-                              <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                                <CalendarX className="h-5 w-5" />
-                                <span className="text-xs font-semibold">No Status</span>
-                              </div>
-                            )}
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={status || 'no-status'}
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    {status === 'In Office' ? (
+                                    <div className="flex flex-col items-center justify-center gap-1 text-green-400">
+                                        <Building className="h-5 w-5" />
+                                        <span className="text-xs font-semibold">In Office</span>
+                                    </div>
+                                    ) : status === 'Remote' ? (
+                                    <div className="flex flex-col items-center justify-center gap-1 text-blue-400">
+                                        <Laptop className="h-5 w-5" />
+                                        <span className="text-xs font-semibold">Remote</span>
+                                    </div>
+                                    ) : (
+                                      <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                                        <CalendarX className="h-5 w-5" />
+                                        <span className="text-xs font-semibold">No Status</span>
+                                      </div>
+                                    )}
+                                </motion.div>
+                            </AnimatePresence>
                         </TableCell>
                         )
                     })}

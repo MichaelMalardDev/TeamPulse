@@ -43,6 +43,9 @@ export default function DashboardPage() {
 
   const handleTeamUpdate = (updatedMember: TeamMember) => {
     setTeam(prevTeam => prevTeam.map(member => member.id === updatedMember.id ? updatedMember : member));
+    if (currentUser && currentUser.id === updatedMember.id) {
+        setCurrentUser(updatedMember);
+    }
   }
 
   if (loading || isLoadingTeam || !currentUser) {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,6 +10,7 @@ import HistoricalCalendar from '../calendar/historical-calendar';
 import { TeamMember, WorkStatus } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { startOfDay } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type UserStatusCardProps = {
   member: TeamMember;
@@ -24,7 +26,7 @@ export default function UserStatusCard({ member }: UserStatusCardProps) {
       (h) => startOfDay(h.date).getTime() === today.getTime()
     );
     setCurrentStatus(todayHistory?.status || 'No Status');
-  }, [member.history]);
+  }, [member]);
 
   const isRemote = currentStatus === 'Remote';
   const isNoStatus = currentStatus === 'No Status';
@@ -43,15 +45,26 @@ export default function UserStatusCard({ member }: UserStatusCardProps) {
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="flex items-center gap-2">
-          {!isNoStatus && (
-            <span
-              className={cn(
-                'h-3 w-3 rounded-full',
-                isRemote ? 'bg-blue-400' : 'bg-green-400'
-              )}
-            />
-          )}
-          <span className="text-sm font-medium">{currentStatus}</span>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentStatus}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-2"
+                >
+                    {!isNoStatus && (
+                        <span
+                        className={cn(
+                            'h-3 w-3 rounded-full',
+                            isRemote ? 'bg-blue-400' : 'bg-green-400'
+                        )}
+                        />
+                    )}
+                    <span className="text-sm font-medium">{currentStatus}</span>
+                </motion.div>
+            </AnimatePresence>
         </div>
       </CardContent>
       <CardFooter>
