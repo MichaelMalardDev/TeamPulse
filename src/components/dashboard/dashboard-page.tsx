@@ -8,15 +8,43 @@ import WeeklyOverview from './weekly-overview';
 
 export default function DashboardPage() {
   const [team, setTeam] = useState<TeamMember[]>(teamData);
-  const [currentStatus, setCurrentStatus] = useState<WorkStatus>(currentUser.status);
+  const [currentStatus, setCurrentStatus] = useState<WorkStatus>(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const todaysRecord = currentUser.history.find(h => h.date.toISOString().startsWith(today));
+    return todaysRecord ? todaysRecord.status : 'In Office';
+  });
 
   const handleStatusChange = (newStatus: WorkStatus) => {
     setCurrentStatus(newStatus);
-    setTeam((prevTeam) =>
-      prevTeam.map((member) =>
-        member.id === currentUser.id ? { ...member, status: newStatus } : member
-      )
-    );
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+
+    const updatedTeam = team.map((member) => {
+      if (member.id === currentUser.id) {
+        const historyIndex = member.history.findIndex(h => h.date.toISOString().startsWith(todayString));
+        const newHistory = [...member.history];
+        if (historyIndex > -1) {
+          newHistory[historyIndex] = { ...newHistory[historyIndex], status: newStatus };
+        } else {
+          newHistory.push({ date: today, status: newStatus });
+        }
+        return { ...member, status: newStatus, history: newHistory };
+      }
+      return member;
+    });
+    setTeam(updatedTeam);
+    
+    // Also update the master data so it's reflected across the app
+    const userInTeamData = teamData.find(m => m.id === currentUser.id);
+    if(userInTeamData) {
+      const historyIndex = userInTeamData.history.findIndex(h => h.date.toISOString().startsWith(todayString));
+      if(historyIndex > -1) {
+        userInTeamData.history[historyIndex].status = newStatus;
+      } else {
+        userInTeamData.history.push({ date: today, status: newStatus });
+      }
+      userInTeamData.status = newStatus;
+    }
   };
 
   return (
