@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Suggests the best day for a team meeting based on presence.
@@ -42,8 +43,10 @@ const suggestMeetingDayPrompt = ai.definePrompt({
 Your goal is to maximize in-person attendance.
 
 Analyze the provided team presence data, which includes past history and future planned statuses.
-Identify the future weekday with the highest number of team members marked as 'In Office'.
-Do not suggest weekends or past dates. Today's date is ${new Date().toISOString().split('T')[0]}.
+Your analysis must only consider future weekdays. Today's date is ${new Date().toISOString().split('T')[0]}. Ignore any dates before today.
+
+From the future dates, identify the weekday with the highest number of team members marked as 'In Office'.
+If there's a tie, suggest the earliest possible day.
 
 Provide the best day, the number of people expected in the office, and a short, friendly justification.
 
