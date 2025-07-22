@@ -12,7 +12,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Bot, LayoutDashboard, GanttChartSquare } from 'lucide-react';
-import { Button } from '../ui/button';
+import React from 'react';
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -30,16 +30,20 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <Link href="/" passHref>
               <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Dashboard">
-                <LayoutDashboard />
-                <span>Dashboard</span>
+                <>
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
+                </>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/summary" passHref>
               <SidebarMenuButton asChild isActive={pathname === '/summary'} tooltip="Team Summary">
-                <Bot />
-                <span>Team Summary</span>
+                <>
+                  <Bot />
+                  <span>Team Summary</span>
+                </>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
