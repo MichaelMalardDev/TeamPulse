@@ -11,7 +11,7 @@ import { TeamMember, WorkStatus } from '@/lib/data';
 import { batchUpdateUserStatus } from '@/lib/firestore';
 import { Building, Laptop, CalendarPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { isWeekend, format, eachDayOfInterval } from 'date-fns';
+import { isWeekend, format, eachDayOfInterval, startOfDay } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateRange } from 'react-day-picker';
 
@@ -31,7 +31,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
   const { toast } = useToast();
 
   useEffect(() => {
-    if (selectedRange?.from) {
+    if (selectedRange?.from && member) {
       const from = selectedRange.from;
       const to = selectedRange.to || from;
       const daysInRange = eachDayOfInterval({ start: from, end: to });
@@ -41,8 +41,8 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
       const newStatuses: Record<string, WorkStatus> = {};
       workDays.forEach(day => {
         const dayStr = day.toISOString().split('T')[0];
-        // Keep existing status if available, otherwise default to 'In Office'
-        newStatuses[dayStr] = dayStatuses[dayStr] || 'In Office';
+        const historyEntry = member.history.find(h => startOfDay(h.date).toISOString().split('T')[0] === dayStr);
+        newStatuses[dayStr] = historyEntry?.status || 'In Office';
       });
       setDayStatuses(newStatuses);
 
@@ -50,7 +50,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
       setSelectedDays([]);
       setDayStatuses({});
     }
-  }, [selectedRange]);
+  }, [selectedRange, member]);
 
 
   const handleStatusChange = (day: Date, status: WorkStatus) => {
@@ -117,7 +117,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
               selected={selectedRange}
               onSelect={setSelectedRange}
               className="rounded-md border"
-              disabled={isWeekend}
+              disabled={(date) => date < startOfDay(new Date()) || isWeekend(date)}
             />
           </div>
           <div className="flex flex-col">
