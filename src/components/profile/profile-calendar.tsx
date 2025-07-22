@@ -30,14 +30,14 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
     statusMap.set(startOfDay(h.date).toISOString(), h.status);
   });
   
-  const getStatusForDay = (day: Date): WorkStatus | null => {
+  const getStatusForDay = (day: Date): WorkStatus | 'No Status' => {
       const dayString = startOfDay(day).toISOString();
-      return statusMap.get(dayString) || null;
+      return statusMap.get(dayString) || 'No Status';
   }
 
   const handleDayClick = (day: Date) => {
     const status = getStatusForDay(day);
-    if(status) {
+    if(status && status !== 'No Status') {
         setSelectedDay(day);
         setPopoverOpen(true);
     } else {
@@ -69,7 +69,7 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
               const status = getStatusForDay(props.date);
               const isSelected = selectedDay && isSameDay(props.date, selectedDay);
               
-              if (status) {
+              if (status && status !== 'No Status') {
                 return (
                     <PopoverTrigger 
                         asChild 

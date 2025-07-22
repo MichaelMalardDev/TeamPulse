@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import HistoricalCalendar from '../calendar/historical-calendar';
-import { TeamMember } from '@/lib/data';
+import { TeamMember, WorkStatus } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import { startOfDay } from 'date-fns';
 
 type UserStatusCardProps = {
   member: TeamMember;
@@ -15,7 +16,18 @@ type UserStatusCardProps = {
 
 export default function UserStatusCard({ member }: UserStatusCardProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const isRemote = member.status === 'Remote';
+  const [currentStatus, setCurrentStatus] = useState<WorkStatus>('No Status');
+
+  useEffect(() => {
+    const today = startOfDay(new Date());
+    const todayHistory = member.history.find(
+      (h) => startOfDay(h.date).getTime() === today.getTime()
+    );
+    setCurrentStatus(todayHistory?.status || 'No Status');
+  }, [member.history]);
+
+  const isRemote = currentStatus === 'Remote';
+  const isNoStatus = currentStatus === 'No Status';
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
@@ -31,13 +43,15 @@ export default function UserStatusCard({ member }: UserStatusCardProps) {
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'h-3 w-3 rounded-full',
-              isRemote ? 'bg-blue-400' : 'bg-green-400'
-            )}
-          />
-          <span className="text-sm font-medium">{member.status}</span>
+          {!isNoStatus && (
+            <span
+              className={cn(
+                'h-3 w-3 rounded-full',
+                isRemote ? 'bg-blue-400' : 'bg-green-400'
+              )}
+            />
+          )}
+          <span className="text-sm font-medium">{currentStatus}</span>
         </div>
       </CardContent>
       <CardFooter>

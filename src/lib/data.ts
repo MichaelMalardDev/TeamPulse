@@ -1,5 +1,5 @@
 
-export type WorkStatus = 'In Office' | 'Remote';
+export type WorkStatus = 'In Office' | 'Remote' | 'No Status';
 
 export interface TeamMember {
   id: string;
