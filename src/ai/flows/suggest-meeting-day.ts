@@ -58,7 +58,8 @@ Your analysis must only consider future weekdays. Today's date is ${new Date().t
 From the future dates, identify the weekday with the highest number of team members marked as 'In Office'.
 If there's a tie, suggest the earliest possible day.
 
-For the suggested day, you must provide a list of all team members, including their unique userId, their role as a string, and their status for that specific day. If a member has no status recorded for that day, their status should be 'No Status'.
+For the suggested day, you must provide a list of all team members, including their unique userId and their status for that specific day. If a member has no status recorded for that day, their status should be 'No Status'.
+For the 'role' field in the output, you must provide a string, not an object.
 
 Provide the best day, the number of people expected in the office, a short, friendly justification, and the list of all team members with their statuses for that day.
 
