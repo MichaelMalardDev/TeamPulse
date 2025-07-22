@@ -210,7 +210,6 @@ const Sidebar = React.forwardRef<
           >
             <SheetHeader className="p-2">
               <SheetTitle className="sr-only">Sidebar Menu</SheetTitle>
-              <SidebarCloseButton />
             </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
