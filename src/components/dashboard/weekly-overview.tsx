@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { TeamMember, WorkStatus } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Laptop } from 'lucide-react';
+import { Building, Laptop, CalendarX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDays, format, isToday, startOfDay, isWeekend, isBefore } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -207,7 +207,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                             key={day.toISOString()} 
                             className={cn(
                               "text-center h-20",
-                              canClick ? "cursor-pointer hover:bg-muted/50" : "opacity-50",
+                              canClick ? "cursor-pointer hover:bg-muted/50" : "",
                               isToday(day) ? 'bg-accent/20' : ''
                             )}
                             onClick={() => canClick && handleOpenDialog(member, day)}
@@ -223,7 +223,10 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                                 <span className="text-xs font-semibold">Remote</span>
                             </div>
                             ) : (
-                              <span className="text-muted-foreground">-</span>
+                              <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                                <CalendarX className="h-5 w-5" />
+                                <span className="text-xs font-semibold">No Status</span>
+                              </div>
                             )}
                         </TableCell>
                         )
