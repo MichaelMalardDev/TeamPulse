@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Bot, LayoutDashboard, GanttChartSquare } from 'lucide-react';
+import { Bot, LayoutDashboard, GanttChartSquare, Users } from 'lucide-react';
 import React from 'react';
 
 export default function AppSidebar() {
@@ -39,10 +39,10 @@ export default function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/summary" passHref>
-              <SidebarMenuButton asChild isActive={pathname === '/summary'} tooltip="Team Summary">
+              <SidebarMenuButton asChild isActive={pathname === '/summary'} tooltip="AI Scheduler">
                 <div>
-                  <Bot />
-                  <span>Team Summary</span>
+                  <Users />
+                  <span>AI Scheduler</span>
                 </div>
               </SidebarMenuButton>
             </Link>

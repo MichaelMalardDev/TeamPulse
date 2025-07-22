@@ -1,17 +1,17 @@
-import TeamSummaryForm from "@/components/ai/team-summary-form";
+import MeetingScheduler from "@/components/ai/meeting-scheduler";
 
 export default function SummaryPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Team Output Summary
+          AI Meeting Scheduler
         </h1>
         <p className="text-muted-foreground">
-          Generate an AI-powered summary of your remote team's daily output.
+          Let AI find the best day for your next team gathering based on presence data.
         </p>
       </div>
-      <TeamSummaryForm />
+      <MeetingScheduler />
     </div>
   );
 }

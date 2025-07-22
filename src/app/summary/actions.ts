@@ -1,47 +1,29 @@
 'use server';
 
-import { summarizeTeamOutput, SummarizeTeamOutputOutput } from '@/ai/flows/summarize-team-output';
+import { suggestMeetingDay, SuggestMeetingDayOutput } from '@/ai/flows/suggest-meeting-day';
+import { getAllTeamMembers } from '@/lib/firestore';
 import { z } from 'zod';
 
-const ActionInputSchema = z.object({
-  teamOutput: z.array(
-    z.object({
-      memberName: z.string().min(1, 'Member name is required.'),
-      dailyOutput: z.string().min(1, 'Daily output is required.'),
-    })
-  ).min(1, 'At least one team member is required.'),
-});
-
-type ActionState = {
-  result?: SummarizeTeamOutputOutput;
+export type ActionState = {
+  result?: SuggestMeetingDayOutput;
   error?: string;
-  issues?: z.ZodIssue[];
 };
 
-export async function generateSummaryAction(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const formObject = Object.fromEntries(formData.entries());
-  
-  const teamOutput = [];
-  let i = 0;
-  while(formObject[`teamOutput[${i}].memberName`]) {
-    teamOutput.push({
-      memberName: formObject[`teamOutput[${i}].memberName`],
-      dailyOutput: formObject[`teamOutput[${i}].dailyOutput`],
-    });
-    i++;
-  }
-
-  const validation = ActionInputSchema.safeParse({ teamOutput });
-  
-  if (!validation.success) {
-    return {
-      error: 'Invalid input.',
-      issues: validation.error.issues,
-    };
-  }
-
+export async function suggestMeetingDayAction(): Promise<ActionState> {
   try {
-    const result = await summarizeTeamOutput(validation.data);
+    const teamMembers = await getAllTeamMembers();
+    
+    // We only need names and history for the AI
+    const teamData = teamMembers.map(member => ({
+        name: member.name,
+        // Convert history dates to simple ISO strings
+        history: member.history.map(h => ({
+            date: h.date.toISOString().split('T')[0],
+            status: h.status,
+        }))
+    }));
+
+    const result = await suggestMeetingDay({ teamData });
     return { result };
   } catch (e: any) {
     return {
