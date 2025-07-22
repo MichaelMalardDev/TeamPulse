@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { updateFutureStatus } from '@/lib/firestore';
 
@@ -20,6 +19,31 @@ type WeeklyOverviewProps = {
   team: TeamMember[];
   onTeamUpdate: (updatedTeam: TeamMember[]) => void;
 };
+
+function StatusToggleButton({
+  status,
+  currentStatus,
+  onStatusChange,
+}: {
+  status: WorkStatus;
+  currentStatus: WorkStatus | null;
+  onStatusChange: (status: WorkStatus) => void;
+}) {
+  const Icon = status === 'In Office' ? Building : Laptop;
+  const isActive = status === currentStatus;
+
+  return (
+    <Button
+      variant={isActive ? 'default' : 'outline'}
+      size="lg"
+      className={cn("w-full justify-start", isActive ? "shadow-md" : "")}
+      onClick={() => onStatusChange(status)}
+    >
+      <Icon className="mr-2 h-5 w-5" />
+      {status}
+    </Button>
+  );
+}
 
 export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewProps) {
   const [weekDays, setWeekDays] = useState<Date[]>([]);
@@ -196,25 +220,17 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
                   on {format(selectedEntry.day, 'EEEE, MMMM d')}
                 </p>
               </DialogHeader>
-              <div className="py-4">
-                <RadioGroup
-                  value={newStatus || ''}
-                  onValueChange={(value: WorkStatus) => setNewStatus(value)}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="In Office" id="in-office" />
-                    <Label htmlFor="in-office" className="flex items-center gap-2 cursor-pointer">
-                      <Building className="h-5 w-5" />
-                      In Office</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Remote" id="remote" />
-                    <Label htmlFor="remote" className="flex items-center gap-2 cursor-pointer">
-                      <Laptop className="h-5 w-5" />
-                      Remote</Label>
-                  </div>
-                </RadioGroup>
+              <div className="py-4 space-y-2">
+                  <StatusToggleButton 
+                    status="In Office"
+                    currentStatus={newStatus}
+                    onStatusChange={setNewStatus}
+                  />
+                  <StatusToggleButton 
+                    status="Remote"
+                    currentStatus={newStatus}
+                    onStatusChange={setNewStatus}
+                  />
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedEntry(null)}>Cancel</Button>
