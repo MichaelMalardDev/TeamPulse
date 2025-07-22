@@ -19,14 +19,21 @@ type UserStatusCardProps = {
 export default function UserStatusCard({ member }: UserStatusCardProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<WorkStatus>('No Status');
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const today = startOfDay(new Date());
-    const todayHistory = member.history.find(
-      (h) => startOfDay(h.date).getTime() === today.getTime()
-    );
-    setCurrentStatus(todayHistory?.status || 'No Status');
-  }, [member]);
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const today = startOfDay(new Date());
+      const todayHistory = member.history.find(
+        (h) => startOfDay(h.date).getTime() === today.getTime()
+      );
+      setCurrentStatus(todayHistory?.status || 'No Status');
+    }
+  }, [member, isClient]);
 
   const isRemote = currentStatus === 'Remote';
   const isNoStatus = currentStatus === 'No Status';

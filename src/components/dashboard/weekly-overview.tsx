@@ -50,13 +50,16 @@ function StatusToggleButton({
 
 export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: WeeklyOverviewProps) {
   const [weekDays, setWeekDays] = useState<Date[]>([]);
-  const [today, setToday] = useState(startOfDay(new Date()));
+  const [today, setToday] = useState<Date | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<{ member: TeamMember, day: Date } | null>(null);
   const [newStatus, setNewStatus] = useState<WorkStatus>('In Office');
 
   useEffect(() => {
+    const startOfToday = startOfDay(new Date());
+    setToday(startOfToday);
+
     let days: Date[] = [];
-    let currentDate = today;
+    let currentDate = startOfToday;
     while(days.length < 5) {
       if (!isWeekend(currentDate)) {
         days.push(currentDate);
@@ -64,7 +67,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
       currentDate = addDays(currentDate, 1);
     }
     setWeekDays(days);
-  }, [today]);
+  }, []);
 
   const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | null => {
     const targetDay = startOfDay(day);
@@ -108,7 +111,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
     setSelectedEntry(null);
   };
   
-  if (!team.length) {
+  if (!team.length || !today) {
     return (
         <div className="space-y-4">
             <h2 className="text-xl font-semibold">This Week</h2>
