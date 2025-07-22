@@ -73,21 +73,19 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
     if (historyEntry) {
       return historyEntry.status;
     }
-
+    
+    // If it's today and there's no history entry, check the current status field.
     if (isToday(targetDay)) {
-        return member.status;
+        const todayHistory = member.history.find(h => startOfDay(h.date).getTime() === today.getTime());
+        if (!todayHistory) return null; // If no history for today, show nothing.
     }
     
-    // For future dates, default to In Office. For past dates, return null if no entry.
-    if (!isBefore(targetDay, today)) {
-        return 'In Office';
-    }
-
+    // For any day without a history entry, return null.
     return null;
   }
 
   const handleOpenDialog = (member: TeamMember, day: Date) => {
-    if (isBefore(startOfDay(day), today)) return;
+    if (isBefore(startOfDay(day), today) && !isToday(day)) return;
     const currentStatus = getStatusForDay(member, day) || 'In Office';
     setSelectedEntry({ member, day });
     setNewStatus(currentStatus);
@@ -216,13 +214,14 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                     </TableCell>
                     {weekDays.map((day) => {
                         const status = getStatusForDay(member, day);
-                        const canClick = member.id === currentUser.id && !isBefore(startOfDay(day), today);
+                        const canClick = member.id === currentUser.id && !isBefore(startOfDay(day), today) || isToday(day);
                         return (
                         <TableCell 
                             key={day.toISOString()} 
                             className={cn(
-                              "text-center",
-                              canClick ? "cursor-pointer hover:bg-muted/50" : "opacity-50",
+                              "text-center h-20",
+                              canClick ? "cursor-pointer hover:bg-muted/50" : "",
+                              !canClick && isBefore(startOfDay(day), today) ? "opacity-50" : "",
                               isToday(day) ? 'bg-accent/20' : ''
                             )}
                             onClick={() => canClick && handleOpenDialog(member, day)}
