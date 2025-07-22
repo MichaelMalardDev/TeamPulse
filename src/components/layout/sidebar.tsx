@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -11,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Bot, LayoutDashboard, GanttChartSquare, Users } from 'lucide-react';
+import { LayoutDashboard, GanttChartSquare, Users } from 'lucide-react';
 import React from 'react';
 
 export default function AppSidebar() {

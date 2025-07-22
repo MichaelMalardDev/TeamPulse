@@ -9,7 +9,7 @@ type TeamOverviewProps = {
 export default function TeamOverview({ team }: TeamOverviewProps) {
   return (
     <motion.div 
-      className="space-y-4"
+      className="space-y-4 flex-1 flex flex-col"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.5 }}
