@@ -112,7 +112,7 @@ export default function ProfilePage() {
                     <CardTitle>Presence Calendar</CardTitle>
                     <CardDescription>Your historical and planned presence. Click on a day to see details.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 sm:p-2 md:p-4">
                     <ProfileCalendar member={teamMember} />
                 </CardContent>
             </Card>

@@ -54,7 +54,7 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
         <Calendar
           mode="single"
           onDayClick={handleDayClick}
-          className="rounded-md border"
+          className="p-0"
           modifiers={{
             remote: remoteDays,
             office: officeDays,
@@ -115,4 +115,3 @@ export default function ProfileCalendar({ member }: ProfileCalendarProps) {
     </div>
   );
 }
-
