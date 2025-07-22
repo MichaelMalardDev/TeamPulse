@@ -11,6 +11,7 @@ import { TeamMember, WorkStatus } from '@/lib/data';
 import { batchUpdateUserStatus } from '@/lib/firestore';
 import { Building, Laptop, CalendarPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { isWeekend } from 'date-fns';
 
 type UpdatePresenceDialogProps = {
   member: TeamMember;
@@ -76,6 +77,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
               selected={selectedDays}
               onSelect={setSelectedDays}
               className="rounded-md border"
+              disabled={isWeekend}
             />
           </div>
           <div>

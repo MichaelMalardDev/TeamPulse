@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Laptop } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDays, format, isToday, startOfDay } from 'date-fns';
+import { addDays, format, isToday, startOfDay, isWeekend } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -30,7 +30,16 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
   useEffect(() => {
     const todayDate = startOfDay(new Date());
     setToday(todayDate);
-    setWeekDays(Array.from({ length: 7 }, (_, i) => addDays(todayDate, i)));
+    
+    let days: Date[] = [];
+    let currentDate = todayDate;
+    while(days.length < 5) {
+      if (!isWeekend(currentDate)) {
+        days.push(currentDate);
+      }
+      currentDate = addDays(currentDate, 1);
+    }
+    setWeekDays(days);
   }, []);
 
   const getStatusForDay = (member: TeamMember, day: Date): WorkStatus | undefined => {
