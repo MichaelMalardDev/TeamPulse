@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -11,19 +11,40 @@ import { TeamMember, WorkStatus } from '@/lib/data';
 import { batchUpdateUserStatus } from '@/lib/firestore';
 import { Building, Laptop, CalendarPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { isWeekend } from 'date-fns';
+import { isWeekend, format } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type UpdatePresenceDialogProps = {
   member: TeamMember;
   onUpdate: () => void;
 };
 
+type DayStatusUpdate = { date: Date; status: WorkStatus };
+
 export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenceDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<Date[] | undefined>([]);
-  const [status, setStatus] = useState<WorkStatus>('In Office');
+  const [dayStatuses, setDayStatuses] = useState<Record<string, WorkStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (selectedDays) {
+      const newStatuses: Record<string, WorkStatus> = {};
+      selectedDays.forEach(day => {
+        const dayStr = day.toISOString().split('T')[0];
+        // Keep existing status if available, otherwise default to 'In Office'
+        newStatuses[dayStr] = dayStatuses[dayStr] || 'In Office';
+      });
+      setDayStatuses(newStatuses);
+    }
+  }, [selectedDays]);
+
+
+  const handleStatusChange = (day: Date, status: WorkStatus) => {
+    const dayStr = day.toISOString().split('T')[0];
+    setDayStatuses(prev => ({ ...prev, [dayStr]: status }));
+  };
 
   const handleSave = async () => {
     if (!selectedDays || selectedDays.length === 0) {
@@ -37,7 +58,12 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
     
     setIsLoading(true);
     try {
-      await batchUpdateUserStatus(member.id, selectedDays, status);
+      const updates: DayStatusUpdate[] = selectedDays.map(day => ({
+        date: day,
+        status: dayStatuses[day.toISOString().split('T')[0]],
+      }));
+
+      await batchUpdateUserStatus(member.id, updates);
       toast({
         title: 'Presence Updated',
         description: `Your status has been updated for ${selectedDays.length} day(s).`,
@@ -45,6 +71,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
       onUpdate();
       setIsOpen(false);
       setSelectedDays([]);
+      setDayStatuses({});
     } catch (error) {
       console.error(error);
       toast({
@@ -65,13 +92,13 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
           Update Presence
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Update Your Presence</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
           <div>
-            <Label className="mb-2 block">1. Select one or more dates</Label>
+            <Label className="mb-2 block font-medium">1. Select one or more dates</Label>
             <Calendar
               mode="multiple"
               selected={selectedDays}
@@ -80,33 +107,53 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
               disabled={isWeekend}
             />
           </div>
-          <div>
-            <Label className="mb-2 block">2. Set your status</Label>
-            <RadioGroup
-              value={status}
-              onValueChange={(value: WorkStatus) => setStatus(value)}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="In Office" id="in-office" />
-                <Label htmlFor="in-office" className="flex items-center gap-2 cursor-pointer">
-                  <Building className="h-5 w-5" />
-                  In Office
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Remote" id="remote" />
-                <Label htmlFor="remote" className="flex items-center gap-2 cursor-pointer">
-                  <Laptop className="h-5 w-5" />
-                  Remote
-                </Label>
-              </div>
-            </RadioGroup>
+          <div className="flex flex-col">
+            <Label className="mb-2 block font-medium">2. Set your status for each day</Label>
+            <ScrollArea className="flex-grow border rounded-md p-4">
+                {selectedDays && selectedDays.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedDays
+                      .sort((a,b) => a.getTime() - b.getTime())
+                      .map(day => {
+                        const dayStr = day.toISOString().split('T')[0];
+                        return (
+                          <div key={dayStr} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                            <span className="font-medium">{format(day, 'EEE, MMM d')}</span>
+                            <RadioGroup
+                              value={dayStatuses[dayStr]}
+                              onValueChange={(value: WorkStatus) => handleStatusChange(day, value)}
+                              className="flex gap-4"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="In Office" id={`in-office-${dayStr}`} />
+                                <Label htmlFor={`in-office-${dayStr}`} className="flex items-center gap-1 cursor-pointer text-xs">
+                                  <Building className="h-4 w-4" />
+                                  Office
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Remote" id={`remote-${dayStr}`} />
+                                <Label htmlFor={`remote-${dayStr}`} className="flex items-center gap-1 cursor-pointer text-xs">
+                                  <Laptop className="h-4 w-4" />
+                                  Remote
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                        )
+                    })}
+                  </div>
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <p className="text-muted-foreground">Select dates to set your status.</p>
+                    </div>
+                )}
+            </ScrollArea>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={isLoading}>
+          <Button onClick={handleSave} disabled={isLoading || !selectedDays || selectedDays.length === 0}>
             {isLoading && <Loader2 className="mr-2 animate-spin" />}
             Save Changes
           </Button>

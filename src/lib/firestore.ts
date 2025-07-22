@@ -112,7 +112,7 @@ export async function updateFutureStatus(userId: string, date: Date, newStatus: 
     }
 }
 
-export async function batchUpdateUserStatus(userId: string, dates: Date[], newStatus: WorkStatus) {
+export async function batchUpdateUserStatus(userId: string, updates: { date: Date; status: WorkStatus }[]) {
   const userDocRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userDocRef);
 
@@ -120,23 +120,24 @@ export async function batchUpdateUserStatus(userId: string, dates: Date[], newSt
     const userData = userSnap.data() as TeamMember;
     const newHistory = [...userData.history];
 
-    dates.forEach(date => {
-      const targetDay = startOfDay(date);
+    updates.forEach(update => {
+      const targetDay = startOfDay(update.date);
       const historyIndex = newHistory.findIndex(h => startOfDay(fromTimestamp(h.date)).getTime() === targetDay.getTime());
       
       if (historyIndex > -1) {
-        newHistory[historyIndex].status = newStatus;
+        newHistory[historyIndex].status = update.status;
       } else {
-        newHistory.push({ date: targetDay, status: newStatus });
+        newHistory.push({ date: targetDay, status: update.status });
       }
     });
 
     const updateData: any = { history: newHistory };
 
-    // Check if one of the updated dates is today
+    // Check if one of the updated dates is today and set the main status
     const today = startOfDay(new Date());
-    if (dates.some(d => startOfDay(d).getTime() === today.getTime())) {
-      updateData.status = newStatus;
+    const todayUpdate = updates.find(u => startOfDay(u.date).getTime() === today.getTime());
+    if (todayUpdate) {
+      updateData.status = todayUpdate.status;
     }
 
     await updateDoc(userDocRef, updateData);
