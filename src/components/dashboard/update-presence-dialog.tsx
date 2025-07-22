@@ -5,8 +5,6 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { TeamMember, WorkStatus } from '@/lib/data';
 import { batchUpdateUserStatus } from '@/lib/firestore';
 import { Building, Laptop, CalendarPlus, Loader2 } from 'lucide-react';
@@ -14,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { isWeekend, format, eachDayOfInterval, startOfDay } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
+import { Label } from '../ui/label';
 
 type UpdatePresenceDialogProps = {
   member: TeamMember;
@@ -21,6 +21,32 @@ type UpdatePresenceDialogProps = {
 };
 
 type DayStatusUpdate = { date: Date; status: WorkStatus };
+
+function StatusToggleButton({
+  status,
+  currentStatus,
+  onStatusChange,
+}: {
+  status: WorkStatus;
+  currentStatus: WorkStatus;
+  onStatusChange: (status: WorkStatus) => void;
+}) {
+  const Icon = status === 'In Office' ? Building : Laptop;
+  const isActive = status === currentStatus;
+
+  return (
+    <Button
+      variant={isActive ? 'default' : 'outline'}
+      size="sm"
+      className={cn("h-8 px-2 text-xs", isActive ? "shadow-sm" : "")}
+      onClick={() => onStatusChange(status)}
+    >
+      <Icon className="mr-1 h-3.5 w-3.5" />
+      {status === 'In Office' ? 'Office' : 'Remote'}
+    </Button>
+  );
+}
+
 
 export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenceDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -132,26 +158,18 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
                         return (
                           <div key={dayStr} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
                             <span className="font-medium">{format(day, 'EEE, MMM d')}</span>
-                            <RadioGroup
-                              value={dayStatuses[dayStr]}
-                              onValueChange={(value: WorkStatus) => handleStatusChange(day, value)}
-                              className="flex gap-4"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="In Office" id={`in-office-${dayStr}`} />
-                                <Label htmlFor={`in-office-${dayStr}`} className="flex items-center gap-1 cursor-pointer text-xs">
-                                  <Building className="h-4 w-4" />
-                                  Office
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Remote" id={`remote-${dayStr}`} />
-                                <Label htmlFor={`remote-${dayStr}`} className="flex items-center gap-1 cursor-pointer text-xs">
-                                  <Laptop className="h-4 w-4" />
-                                  Remote
-                                </Label>
-                              </div>
-                            </RadioGroup>
+                            <div className="flex gap-2">
+                                <StatusToggleButton 
+                                    status="In Office" 
+                                    currentStatus={dayStatuses[dayStr]}
+                                    onStatusChange={(newStatus) => handleStatusChange(day, newStatus)}
+                                />
+                                <StatusToggleButton 
+                                    status="Remote" 
+                                    currentStatus={dayStatuses[dayStr]}
+                                    onStatusChange={(newStatus) => handleStatusChange(day, newStatus)}
+                                />
+                            </div>
                           </div>
                         )
                     })}
