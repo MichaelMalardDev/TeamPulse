@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
@@ -12,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getRemoteTeamMembers } from '@/lib/firestore';
 import { TeamMember } from '@/lib/data';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 const initialState = {
   result: undefined,
@@ -111,39 +112,46 @@ export default function TeamSummaryForm() {
               </CardHeader>
               <CardContent>
                 <div className="h-80 w-full">
-                  <ResponsiveContainer>
-                    <BarChart data={state.result.productivityAnalysis}>
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="memberName" 
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis 
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        domain={[0, 100]}
-                      />
-                      <Tooltip 
-                        cursor={{fill: 'hsla(var(--muted))'}}
-                        content={<ChartTooltipContent 
-                          nameKey="productivityScore" 
-                          labelKey="memberName" 
-                          formatter={(value, name, props) => (
-                            <div className="flex flex-col gap-1">
-                               <p className="font-bold text-lg">{props.payload.memberName}: {value}</p>
-                               <p className="text-sm text-muted-foreground">{props.payload.justification}</p>
-                            </div>
-                          )}
-                        />}
-                      />
-                      <Bar dataKey="productivityScore" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <ChartContainer config={{
+                    productivityScore: {
+                      label: 'Productivity',
+                      color: "hsl(var(--primary))",
+                    }
+                  }}>
+                    <ResponsiveContainer>
+                      <BarChart data={state.result.productivityAnalysis}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="memberName" 
+                          stroke="#888888"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
+                          stroke="#888888"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          domain={[0, 100]}
+                        />
+                        <Tooltip 
+                          cursor={{fill: 'hsla(var(--muted))'}}
+                          content={<ChartTooltipContent 
+                            nameKey="productivityScore" 
+                            labelKey="memberName" 
+                            formatter={(value, name, props) => (
+                              <div className="flex flex-col gap-1">
+                                <p className="font-bold text-lg">{props.payload.memberName}: {value}</p>
+                                <p className="text-sm text-muted-foreground">{props.payload.justification}</p>
+                              </div>
+                            )}
+                          />}
+                        />
+                        <Bar dataKey="productivityScore" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
                 </div>
               </CardContent>
             </Card>
