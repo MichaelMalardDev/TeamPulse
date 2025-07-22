@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Laptop } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDays, format, isToday, startOfDay, isWeekend, isFuture } from 'date-fns';
+import { addDays, format, isToday, startOfDay, isWeekend, isFuture, isPast } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -79,6 +79,9 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
   }
 
   const handleOpenDialog = (member: TeamMember, day: Date) => {
+    // Prevent opening dialog for past days, except today
+    if (isPast(day) && !isToday(day)) return;
+
     const currentStatus = getStatusForDay(member, day);
     setSelectedEntry({ member, day });
     setNewStatus(currentStatus || 'In Office');
@@ -184,11 +187,16 @@ export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewPro
                   </TableCell>
                   {weekDays.map((day) => {
                     const status = getStatusForDay(member, day);
+                    const isPastDay = isPast(day) && !isToday(day);
                     return (
                       <TableCell 
                         key={day.toISOString()} 
-                        className={cn("text-center cursor-pointer hover:bg-muted/50", isToday(day) ? 'bg-primary/10' : '')}
-                        onClick={() => handleOpenDialog(member, day)}
+                        className={cn(
+                          "text-center hover:bg-muted/50", 
+                          isToday(day) ? 'bg-primary/10' : '',
+                          isPastDay ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                        )}
+                        onClick={() => !isPastDay && handleOpenDialog(member, day)}
                       >
                         {status === 'In Office' && (
                           <div className="flex flex-col items-center justify-center gap-1 text-green-400">
