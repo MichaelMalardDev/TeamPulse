@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 type WeeklyOverviewProps = {
   team: TeamMember[];
   currentUser: TeamMember;
-  onTeamUpdate: (updatedTeam: TeamMember[]) => void;
+  onTeamUpdate: (updatedMember: TeamMember) => void;
 };
 
 function StatusToggleButton({
@@ -73,6 +73,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
   }
 
   const handleOpenDialog = (member: TeamMember, day: Date) => {
+    if (member.id !== currentUser.id) return;
     const currentStatus = getStatusForDay(member, day) || 'In Office';
     setSelectedEntry({ member, day });
     setNewStatus(currentStatus);
@@ -80,12 +81,30 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
   
   const handleStatusUpdate = async () => {
     if (!selectedEntry) return;
-
+  
     const { member, day } = selectedEntry;
     
     await updateFutureStatus(member.id, day, newStatus);
-    onTeamUpdate(team); // This will trigger a re-fetch of all data
 
+    const updatedHistory = [...member.history];
+    const targetDay = startOfDay(day);
+    const historyIndex = updatedHistory.findIndex(h => startOfDay(h.date).getTime() === targetDay.getTime());
+
+    if (historyIndex > -1) {
+      updatedHistory[historyIndex].status = newStatus;
+    } else {
+      updatedHistory.push({ date: targetDay, status: newStatus });
+    }
+
+    let finalStatus = member.status;
+    if(isToday(day)) {
+        finalStatus = newStatus;
+    }
+
+    const updatedMember = { ...member, history: updatedHistory, status: finalStatus };
+    
+    onTeamUpdate(updatedMember);
+  
     setSelectedEntry(null);
   };
   
@@ -210,7 +229,7 @@ export default function WeeklyOverview({ team, currentUser, onTeamUpdate }: Week
                               canClick ? "cursor-pointer hover:bg-muted/50" : "",
                               isToday(day) ? 'bg-accent/20' : ''
                             )}
-                            onClick={() => canClick && handleOpenDialog(member, day)}
+                            onClick={() => handleOpenDialog(member, day)}
                         >
                             {status === 'In Office' ? (
                             <div className="flex flex-col items-center justify-center gap-1 text-green-400">

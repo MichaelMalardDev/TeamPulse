@@ -41,9 +41,8 @@ export default function DashboardPage() {
   }, [teamMember, team]);
 
 
-  const handleTeamUpdate = (updatedTeam: TeamMember[]) => {
-    setTeam(updatedTeam);
-    fetchTeamData();
+  const handleTeamUpdate = (updatedMember: TeamMember) => {
+    setTeam(prevTeam => prevTeam.map(member => member.id === updatedMember.id ? updatedMember : member));
   }
 
   if (loading || isLoadingTeam || !currentUser) {
@@ -62,11 +61,11 @@ export default function DashboardPage() {
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
                 <p className="text-muted-foreground">Your team's status at a glance.</p>
             </div>
-            <UpdatePresenceDialog member={currentUser} onUpdate={fetchTeamData} />
+            <UpdatePresenceDialog member={currentUser} onUpdate={handleTeamUpdate} />
           </div>
       </motion.div>
 
-      <WeeklyOverview team={team} currentUser={currentUser} onTeamUpdate={fetchTeamData} />
+      <WeeklyOverview team={team} currentUser={currentUser} onTeamUpdate={handleTeamUpdate} />
 
       <TeamOverview team={team} />
     </div>

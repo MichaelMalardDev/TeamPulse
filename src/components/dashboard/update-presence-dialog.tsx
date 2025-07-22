@@ -17,7 +17,7 @@ import { Label } from '../ui/label';
 
 type UpdatePresenceDialogProps = {
   member: TeamMember;
-  onUpdate: () => void;
+  onUpdate: (updatedMember: TeamMember) => void;
 };
 
 type DayStatusUpdate = { date: Date; status: WorkStatus };
@@ -57,7 +57,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
   const { toast } = useToast();
 
   useEffect(() => {
-    if (selectedRange?.from && member) {
+    if (isOpen && selectedRange?.from && member) {
       const from = selectedRange.from;
       const to = selectedRange.to || from;
       const daysInRange = eachDayOfInterval({ start: from, end: to });
@@ -72,11 +72,13 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
       });
       setDayStatuses(newStatuses);
 
-    } else {
-      setSelectedDays([]);
-      setDayStatuses({});
+    } else if (!isOpen) {
+        // Reset state when dialog closes
+        setSelectedRange(undefined);
+        setSelectedDays([]);
+        setDayStatuses({});
     }
-  }, [selectedRange, member]);
+  }, [selectedRange, member, isOpen]);
 
 
   const handleStatusChange = (day: Date, status: WorkStatus) => {
@@ -102,15 +104,33 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
       }));
 
       await batchUpdateUserStatus(member.id, updates);
+      
+      const newHistory = [...member.history];
+      updates.forEach(update => {
+          const targetDay = startOfDay(update.date);
+          const historyIndex = newHistory.findIndex(h => startOfDay(h.date).getTime() === targetDay.getTime());
+          
+          if (historyIndex > -1) {
+              newHistory[historyIndex].status = update.status;
+          } else {
+              newHistory.push({ date: targetDay, status: update.status });
+          }
+      });
+      
+      let newStatus = member.status;
+      const today = startOfDay(new Date());
+      const todayUpdate = updates.find(u => startOfDay(u.date).getTime() === today.getTime());
+      if (todayUpdate) {
+        newStatus = todayUpdate.status;
+      }
+
+      onUpdate({ ...member, history: newHistory, status: newStatus });
+
       toast({
         title: 'Presence Updated',
         description: `Your status has been updated for ${selectedDays.length} day(s).`,
       });
-      onUpdate();
       setIsOpen(false);
-      setSelectedRange(undefined);
-      setSelectedDays([]);
-      setDayStatuses({});
     } catch (error) {
       console.error(error);
       toast({
@@ -142,7 +162,7 @@ export default function UpdatePresenceDialog({ member, onUpdate }: UpdatePresenc
               mode="range"
               selected={selectedRange}
               onSelect={setSelectedRange}
-              className="rounded-md border"
+              className="rounded-md border p-0"
               disabled={(date) => date < startOfDay(new Date()) || isWeekend(date)}
             />
           </div>
