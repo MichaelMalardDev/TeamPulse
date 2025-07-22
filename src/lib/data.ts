@@ -76,5 +76,3 @@ export const teamData: TeamMember[] = [
     history: generateHistory(6),
   },
 ];
-
-export const currentUser: TeamMember = teamData[0];

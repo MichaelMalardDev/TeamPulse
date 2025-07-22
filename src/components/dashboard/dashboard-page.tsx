@@ -1,19 +1,31 @@
 
 'use client';
 
-import { useState } from 'react';
-import { teamData, currentUser, TeamMember, WorkStatus } from '@/lib/data';
+import { useState, useEffect } from 'react';
+import { teamData, TeamMember, WorkStatus } from '@/lib/data';
 import StatusSelector from './status-selector';
 import TeamOverview from './team-overview';
 import WeeklyOverview from './weekly-overview';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardPage() {
+  const { teamMember } = useAuth();
   const [team, setTeam] = useState<TeamMember[]>(teamData);
-  const [currentStatus, setCurrentStatus] = useState<WorkStatus>(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todaysRecord = currentUser.history.find(h => h.date.toISOString().startsWith(today));
-    return todaysRecord ? todaysRecord.status : 'In Office';
-  });
+  const [currentUser, setCurrentUser] = useState<TeamMember | null>(null);
+  const [currentStatus, setCurrentStatus] = useState<WorkStatus>('In Office');
+
+  useEffect(() => {
+    if (teamMember) {
+      const userInTeam = team.find(m => m.id === teamMember.id);
+      if (userInTeam) {
+        setCurrentUser(userInTeam);
+        const today = new Date().toISOString().split('T')[0];
+        const todaysRecord = userInTeam.history.find(h => h.date.toISOString().startsWith(today));
+        setCurrentStatus(todaysRecord ? todaysRecord.status : userInTeam.status);
+      }
+    }
+  }, [teamMember, team]);
+
 
   const handleTeamUpdate = (updatedTeam: TeamMember[]) => {
     setTeam(updatedTeam);
@@ -28,6 +40,8 @@ export default function DashboardPage() {
   }
 
   const handleStatusChange = (newStatus: WorkStatus) => {
+    if (!currentUser) return;
+    
     setCurrentStatus(newStatus);
     const today = new Date();
     
@@ -53,6 +67,10 @@ export default function DashboardPage() {
     
     handleTeamUpdate(updatedTeam);
   };
+
+  if (!currentUser) {
+    return <div>Loading user data...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-8">
