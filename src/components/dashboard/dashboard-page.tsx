@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,37 +15,43 @@ export default function DashboardPage() {
     return todaysRecord ? todaysRecord.status : 'In Office';
   });
 
+  const handleTeamUpdate = (updatedTeam: TeamMember[]) => {
+    setTeam(updatedTeam);
+    // This is a simple way to update the "master" data.
+    // In a real app, this would be an API call.
+    updatedTeam.forEach(updatedMember => {
+      const index = teamData.findIndex(m => m.id === updatedMember.id);
+      if (index !== -1) {
+        teamData[index] = updatedMember;
+      }
+    });
+  }
+
   const handleStatusChange = (newStatus: WorkStatus) => {
     setCurrentStatus(newStatus);
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-
+    
     const updatedTeam = team.map((member) => {
       if (member.id === currentUser.id) {
-        const historyIndex = member.history.findIndex(h => h.date.toISOString().startsWith(todayString));
-        const newHistory = [...member.history];
-        if (historyIndex > -1) {
-          newHistory[historyIndex] = { ...newHistory[historyIndex], status: newStatus };
-        } else {
-          newHistory.push({ date: today, status: newStatus });
-        }
-        return { ...member, status: newStatus, history: newHistory };
+        return { ...member, status: newStatus };
       }
       return member;
     });
-    setTeam(updatedTeam);
-    
-    // Also update the master data so it's reflected across the app
-    const userInTeamData = teamData.find(m => m.id === currentUser.id);
-    if(userInTeamData) {
-      const historyIndex = userInTeamData.history.findIndex(h => h.date.toISOString().startsWith(todayString));
-      if(historyIndex > -1) {
-        userInTeamData.history[historyIndex].status = newStatus;
+
+    const userInTeam = updatedTeam.find(m => m.id === currentUser.id);
+    if(userInTeam) {
+      const dayString = today.toISOString().split('T')[0];
+      const historyIndex = userInTeam.history.findIndex(h => h.date.toISOString().startsWith(dayString));
+      const newHistory = [...userInTeam.history];
+      if (historyIndex > -1) {
+        newHistory[historyIndex] = { ...newHistory[historyIndex], status: newStatus };
       } else {
-        userInTeamData.history.push({ date: today, status: newStatus });
+        newHistory.push({ date: today, status: newStatus });
       }
-      userInTeamData.status = newStatus;
+      userInTeam.history = newHistory;
     }
+    
+    handleTeamUpdate(updatedTeam);
   };
 
   return (
@@ -59,7 +66,7 @@ export default function DashboardPage() {
         <StatusSelector currentStatus={currentStatus} onStatusChange={handleStatusChange} />
       </div>
 
-      <WeeklyOverview team={team} />
+      <WeeklyOverview team={team} onTeamUpdate={handleTeamUpdate} />
 
       <TeamOverview team={team} />
     </div>

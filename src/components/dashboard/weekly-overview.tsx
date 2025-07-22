@@ -10,15 +10,21 @@ import { cn } from '@/lib/utils';
 import { addDays, format, isToday, startOfDay } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 type WeeklyOverviewProps = {
   team: TeamMember[];
+  onTeamUpdate: (updatedTeam: TeamMember[]) => void;
 };
 
-export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
+export default function WeeklyOverview({ team, onTeamUpdate }: WeeklyOverviewProps) {
   const [weekDays, setWeekDays] = useState<Date[]>([]);
   const [today, setToday] = useState<Date | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<{ member: TeamMember, day: Date } | null>(null);
+  const [newStatus, setNewStatus] = useState<WorkStatus | null>(null);
 
   useEffect(() => {
     const todayDate = startOfDay(new Date());
@@ -34,6 +40,43 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
     if (isToday(day)) return member.status;
     return undefined;
   }
+
+  const handleOpenDialog = (member: TeamMember, day: Date) => {
+    const currentStatus = getStatusForDay(member, day);
+    setSelectedEntry({ member, day });
+    setNewStatus(currentStatus || 'In Office');
+  };
+  
+  const handleStatusUpdate = () => {
+    if (!selectedEntry || !newStatus) return;
+
+    const { member, day } = selectedEntry;
+    const dayString = day.toISOString().split('T')[0];
+
+    const updatedTeam = team.map(m => {
+      if (m.id === member.id) {
+        const historyIndex = m.history.findIndex(h => h.date.toISOString().startsWith(dayString));
+        const newHistory = [...m.history];
+        if (historyIndex > -1) {
+          newHistory[historyIndex] = { ...newHistory[historyIndex], status: newStatus };
+        } else {
+          newHistory.push({ date: day, status: newStatus });
+        }
+        
+        let currentStatus = m.status;
+        if (isToday(day)) {
+          currentStatus = newStatus;
+        }
+
+        return { ...m, status: currentStatus, history: newHistory };
+      }
+      return m;
+    });
+
+    onTeamUpdate(updatedTeam);
+    setSelectedEntry(null);
+    setNewStatus(null);
+  };
   
   if (!today) {
     return (
@@ -124,7 +167,11 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
                   {weekDays.map((day) => {
                     const status = getStatusForDay(member, day);
                     return (
-                      <TableCell key={day.toISOString()} className={cn("text-center", isToday(day) ? 'bg-primary/10' : '')}>
+                      <TableCell 
+                        key={day.toISOString()} 
+                        className={cn("text-center cursor-pointer hover:bg-muted/50", isToday(day) ? 'bg-primary/10' : '')}
+                        onClick={() => handleOpenDialog(member, day)}
+                      >
                         {status === 'In Office' && (
                           <div className="flex flex-col items-center justify-center gap-1 text-green-400">
                             <Building className="h-5 w-5" />
@@ -147,6 +194,46 @@ export default function WeeklyOverview({ team }: WeeklyOverviewProps) {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedEntry} onOpenChange={(isOpen) => !isOpen && setSelectedEntry(null)}>
+        <DialogContent>
+          {selectedEntry && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Update Status for {selectedEntry.member.name}</DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  on {format(selectedEntry.day, 'EEEE, MMMM d')}
+                </p>
+              </DialogHeader>
+              <div className="py-4">
+                <RadioGroup
+                  value={newStatus || ''}
+                  onValueChange={(value: WorkStatus) => setNewStatus(value)}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="In Office" id="in-office" />
+                    <Label htmlFor="in-office" className="flex items-center gap-2 cursor-pointer">
+                      <Building className="h-5 w-5" />
+                      In Office</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Remote" id="remote" />
+                    <Label htmlFor="remote" className="flex items-center gap-2 cursor-pointer">
+                      <Laptop className="h-5 w-5" />
+                      Remote</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedEntry(null)}>Cancel</Button>
+                <Button onClick={handleStatusUpdate}>Save Changes</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
